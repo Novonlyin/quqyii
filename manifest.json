@@ -1,0 +1,15 @@
+{
+  "name": "AI人设生成",
+  "short_name": "人设工具",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#FAFAFA",
+  "icons": [
+    {
+      "src": "https://nos.netease.com/vcloud-statistic/nrtc/9de5d1c8-a976-434e-8195-5dbc2a586a0a.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 人设生成器</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FAFAFA">
+    <link rel="apple-touch-icon" href="https://nos.netease.com/vcloud-statistic/nrtc/9de5d1c8-a976-434e-8195-5dbc2a586a0a.png">
+    <style>
+        /* iOS / Ins 极简纯粹黑白灰 PWA UI */
+        :root {
+            --bg-color: #FAFAFA;
+            --card-bg: #FFFFFF;
+            --text-main: #111111;
+            --text-muted: #8E8E93;
+            --input-bg: #F2F2F7;
+            --btn-bg: #111111;
+            --btn-text: #FFFFFF;
+            --border-radius: 16px;
+            --border-color: #E5E5EA;
+            
+            --color-persona: #111111;
+            --color-api: #8E8E93;
+            --color-lib: #C7C7CC;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            max-width: 600px;
+            width: 100%;
+            height: 100vh;
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.04);
+            position: relative;
+        }
+
+        svg {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .flex-center {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* 底部 Dock 栏导航 */
+        .bottom-dock {
+            display: flex;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+            padding: 10px 16px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            justify-content: space-around;
+            z-index: 20;
+        }
+
+        .dock-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 10px 28px;
+            border-radius: 16px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dock-btn svg {
+            width: 26px;
+            height: 26px;
+            stroke-width: 2.2;
+        }
+
+        .dock-btn.active {
+            color: var(--text-main);
+            background: var(--input-bg);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .view-content {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+            background: #FFFFFF;
+        }
+
+        .view-panel {
+            padding: 20px 16px;
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        /* ----- 视图一：聊天生成器 ----- */
+        .export-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: #FAFAFA;
+        }
+        .export-bar input, .export-bar select, .export-bar button {
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            outline: none;
+            background: #fff;
+            color: var(--text-main);
+            font-family: inherit;
+        }
+        .export-bar input { flex: 2; }
+        .export-bar select { flex: 1; }
+        .export-bar button {
+            background: var(--input-bg);
+            cursor: pointer;
+            font-weight: 500;
+            border: none;
+        }
+        .export-bar button:active { background: #E5E5EA; }
+
+        .chat-box {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .msg-user {
+            align-self: flex-end;
+            background: var(--btn-bg);
+            color: #FFFFFF;
+            border-bottom-right-radius: 4px;
+        }
+        .msg-ai {
+            align-self: flex-start;
+            background: var(--input-bg);
+            color: var(--text-main);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-area {
+            padding: 12px 16px;
+            background: #FAFAFA;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .chat-input-area textarea {
+            flex: 1;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 12px 16px;
+            font-size: 15px;
+            resize: none;
+            min-height: 22px;
+            max-height: 120px;
+            outline: none;
+            font-family: inherit;
+        }
+        .chat-input-area button {
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 18px;
+            height: 46px;
+            padding: 0 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .chat-input-area button:disabled { opacity: 0.5; }
+
+        /* ----- 表单与按钮通用 ----- */
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            box-sizing: border-box;
+            background: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 15px;
+            outline: none;
+            transition: 0.2s;
+            font-family: inherit;
+            color: var(--text-main);
+        }
+        .form-group input:focus, .form-group select:focus {
+            background: #FFF;
+            border: 1px solid var(--text-main);
+        }
+        
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            border: none;
+        }
+        .btn-primary { background: var(--btn-bg); color: #FFF; }
+        .btn-primary:active { opacity: 0.8; }
+        
+        .btn-secondary { background: #FFF; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-secondary:active { background: var(--input-bg); }
+
+        .divider { height: 1px; background: var(--border-color); margin: 24px 0; width: 100%; }
+        .panel-title { font-size: 18px; font-weight: 700; margin-top: 0; margin-bottom: 20px; }
+        
+        /* ----- 视图二：设置系统 ----- */
+        .ios-menu-group {
+            background: #FFFFFF;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.01);
+        }
+        .ios-menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 16px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .ios-menu-item:active { background: var(--input-bg); }
+        .ios-menu-item:last-child { border-bottom: none; }
+        .ios-menu-item .menu-icon { display: flex; align-items: center; gap: 12px; }
+        .ios-menu-item .chevron { color: #C7C7CC; }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 16px;
+            font-weight: 600;
+            padding: 0;
+            cursor: pointer;
+            margin-bottom: 24px;
+            font-family: inherit;
+        }
+        .back-btn:active { opacity: 0.7; }
+        
+        /* 数据储存统计占比 */
+        .storage-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+        .storage-title { font-size: 17px; font-weight: 600; }
+        .storage-total { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .storage-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--input-bg); margin-bottom: 16px; }
+        .storage-segment { height: 100%; transition: width 0.4s ease; }
+        .segment-persona { background: var(--color-persona); }
+        .segment-api { background: var(--color-api); }
+        .segment-lib { background: var(--color-lib); }
+        
+        .storage-legend { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+        .legend-item { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 500; color: var(--text-main); }
+        .legend-left { display: flex; align-items: center; gap: 8px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* ----- 视图三：API库 ----- */
+        .search-bar { display: flex; align-items: center; background: var(--input-bg); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; }
+        .search-bar svg { color: var(--text-muted); margin-right: 8px; }
+        .search-bar input { border: none; background: transparent; flex: 1; font-size: 15px; outline: none; color: var(--text-main); }
+        .search-bar input::placeholder { color: var(--text-muted); }
+        #addApiForm { background: #FAFAFA; padding: 16px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+        
+        .api-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px; }
+        .api-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .api-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .api-card-header h4 { margin: 0; font-size: 16px; font-weight: 600; }
+        
+        .api-badges { display: flex; align-items: center; gap: 6px; }
+        .api-badge {
+            font-size: 11px;
+            background: var(--text-main);
+            color: #FFF;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .api-stars { display: flex; color: var(--text-main); gap: 2px; }
+        .api-stars svg { width: 12px; height: 12px; }
+
+        .api-info-row {
+            display: flex;
+            align-items: center;
+            background: var(--input-bg);
+            border-radius: 10px;
+            padding: 6px 12px;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+        .api-info-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .api-info-row input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+            width: 100%;
+            font-family: inherit;
+        }
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+        .icon-btn:active { background: #E5E5EA; color: var(--text-main); }
+        .icon-btn svg { width: 16px; height: 16px; }
+
+        .api-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .action-btn {
+            flex: 1; background: var(--input-bg); border: none; padding: 10px 0;
+            border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer;
+        }
+        .action-btn:active { background: #E5E5EA; }
+        .action-danger { color: #FF3B30; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="view-content">
+            <!-- 视图一：人设生成器 -->
+            <div id="chatView" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="export-bar">
+                    <input type="text" id="filename" placeholder="文件名 (如: 男主设定)">
+                    <select id="exportFormat">
+                        <option value="txt">.txt</option>
+                        <option value="doc">.doc</option>
+                    </select>
+                    <button onclick="exportChat()" class="flex-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+                    </button>
+                    <button onclick="clearChat()" style="margin-left:auto; color:#FF3B30; background:transparent;" class="flex-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+                
+                <div class="chat-box" id="chatBox"></div>
+                
+                <div class="chat-input-area">
+                    <textarea id="chatInput" placeholder="输入你想生成的大纲..." rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                    <button id="sendBtn" onclick="sendMessage()" class="flex-center">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 视图二：设置系统 -->
+            <div id="settingsView" class="view-panel">
+                <!-- 设置主菜单 -->
+                <div id="settingsMainMenu" style="display: block;">
+                    <div class="ios-menu-group">
+                        <button class="ios-menu-item" onclick="openSettingsSubView('apiConfigSubView')">
+                            <div class="menu-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                                API 配置
+                            </div>
+                            <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                        <button class="ios-menu-item" onclick="openSettingsSubView('dataStorageSubView'); updateStorageStats();">
+                            <div class="menu-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                                数据储存
+                            </div>
+                            <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- API 配置子页面 (修改并保存预设) -->
+                <div id="apiConfigSubView" style="display: none;">
+                    <button class="back-btn" onclick="backToSettingsMain()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
+                    </button>
+                    
+                    <h2 class="panel-title">当前激活配置</h2>
+                    <div class="form-group">
+                        <label>API 反代地址</label>
+                        <input type="text" id="activeUrl" placeholder="https://api.openai.com/v1" oninput="updateActiveConfig()">
+                    </div>
+                    <div class="form-group">
+                        <label>API 密钥</label>
+                        <input type="password" id="activeKey" placeholder="sk-..." oninput="updateActiveConfig()">
+                    </div>
+                    <button class="btn-primary flex-center" id="fetchBtn" onclick="fetchModels()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 拉取模型
+                    </button>
+                    <div class="form-group" style="margin-top:20px;">
+                        <label>选择模型</label>
+                        <select id="activeModel" onchange="updateActiveConfig()"></select>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <h2 class="panel-title">保存 / 更新 预设</h2>
+                    <div class="form-group">
+                        <label>预设备注 (选填)</label>
+                        <input type="text" id="activeNote" placeholder="例如：备用优质节点">
+                    </div>
+                    <button class="btn-secondary flex-center" onclick="saveActiveAsPreset()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> 保存更改至预设
+                    </button>
+                </div>
+
+                <!-- 数据储存子页面 -->
+                <div id="dataStorageSubView" style="display: none;">
+                    <button class="back-btn" onclick="backToSettingsMain()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
+                    </button>
+
+                    <div class="storage-header">
+                        <div class="storage-title">此工具占用内存</div>
+                        <div class="storage-total" id="totalSizeTxt">0 KB</div>
+                    </div>
+                    
+                    <div class="storage-bar">
+                        <div class="storage-segment segment-persona" id="barPersona" style="width: 0%;"></div>
+                        <div class="storage-segment segment-api" id="barApi" style="width: 0%;"></div>
+                        <div class="storage-segment segment-lib" id="barLib" style="width: 0%;"></div>
+                    </div>
+
+                    <div class="storage-legend">
+                        <div class="legend-item">
+                            <div class="legend-left"><div class="legend-dot segment-persona"></div> 生成的人设数据</div>
+                            <div id="sizePersonaTxt">0 KB</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-left"><div class="legend-dot segment-api"></div> API 配置数据</div>
+                            <div id="sizeApiTxt">0 KB</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-left"><div class="legend-dot segment-lib"></div> API 库存储数据</div>
+                            <div id="sizeLibTxt">0 KB</div>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <h2 class="panel-title">数据管理</h2>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button class="btn-primary flex-center" onclick="exportAllData()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg> 导出全部数据
+                        </button>
+                        <button class="btn-secondary flex-center" onclick="document.getElementById('importFile').click()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg> 导入已有数据
+                        </button>
+                        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importAllData(event)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视图三：API 预设库 -->
+            <div id="libraryView" class="view-panel">
+                <div class="search-bar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" placeholder="搜索 API 站子名字..." oninput="renderLibrary()">
+                </div>
+                
+                <button class="btn-secondary flex-center" style="margin-bottom:16px;" onclick="toggleAddForm()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 录入新 API
+                </button>
+                
+                <!-- 新增 API 表单 -->
+                <div id="addApiForm" style="display:none;">
+                    <div class="form-group">
+                        <label>API 站子名字 (必填)</label>
+                        <input type="text" id="libName" placeholder="例如：DeepSeek官方">
+                    </div>
+                    <div class="form-group">
+                        <label>反代地址 (必填)</label>
+                        <input type="text" id="libUrl" placeholder="https://api...">
+                    </div>
+                    <div class="form-group">
+                        <label>密钥 (必填)</label>
+                        <input type="password" id="libKey" placeholder="sk-...">
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>星级评分</label>
+                            <select id="libStars">
+                                <option value="5">五星 ⭐⭐⭐⭐⭐</option>
+                                <option value="4">四星 ⭐⭐⭐⭐</option>
+                                <option value="3" selected>三星 ⭐⭐⭐</option>
+                                <option value="2">二星 ⭐⭐</option>
+                                <option value="1">一星 ⭐</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>价格水平</label>
+                            <select id="libPrice">
+                                <option value="免费">免费</option>
+                                <option value="便宜">便宜</option>
+                                <option value="适中" selected>适中</option>
+                                <option value="昂贵">昂贵</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="saveLibraryApi()">确认添加入库</button>
+                </div>
+                
+                <div class="api-list" id="apiList"></div>
+            </div>
+        </div>
+
+        <!-- 底栏 Dock 导航 (移除了文字，只留纯净SVG) -->
+        <div class="bottom-dock">
+            <button id="tab-chat" class="dock-btn active" onclick="switchTab('chat')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> 
+            </button>
+            <button id="tab-settings" class="dock-btn" onclick="switchTab('settings')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button id="tab-library" class="dock-btn" onclick="switchTab('library')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // PWA Service Worker 注册
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker 注册成功'))
+                    .catch(err => console.log('Service Worker 注册失败', err));
+            });
+        }
+
+        // 本地数据缓存读取
+        let savedApis = JSON.parse(localStorage.getItem('savedApis')) || [];
+        let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [
+            { role: 'system', content: '你是一个顶级的小说/游戏角色设定师。用户会和你交流人设大纲或灵感，你需要通过对话的形式，逐步帮用户扩写、润色人物设定的基本信息、外貌、性格、背景、特殊技能等。排版整洁。' }
+        ];
+        
+        let currentApiUrl = localStorage.getItem('currentApiUrl') || '';
+        let currentApiKey = localStorage.getItem('currentApiKey') || '';
+        let currentModel = localStorage.getItem('currentModel') || '';
+        let availableModels = JSON.parse(localStorage.getItem('availableModels')) || [];
+        // 追踪当前配置关联的库中ID（用于保存预设时进行覆盖更新）
+        let activePresetId = localStorage.getItem('activePresetId') || '';
+
+        // 初始化
+        window.onload = () => {
+            document.getElementById('activeUrl').value = currentApiUrl;
+            document.getElementById('activeKey').value = currentApiKey;
+            renderModelSelect();
+            renderChat();
+            renderLibrary();
+        };
+
+        // Tab Dock 切换逻辑
+        function switchTab(tab) {
+            document.getElementById('tab-chat').classList.remove('active');
+            document.getElementById('tab-settings').classList.remove('active');
+            document.getElementById('tab-library').classList.remove('active');
+            
+            document.getElementById('chatView').style.display = 'none';
+            document.getElementById('settingsView').style.display = 'none';
+            document.getElementById('libraryView').style.display = 'none';
+
+            if (tab === 'chat') {
+                document.getElementById('tab-chat').classList.add('active');
+                document.getElementById('chatView').style.display = 'flex';
+                scrollToBottom();
+            } else if (tab === 'settings') {
+                document.getElementById('tab-settings').classList.add('active');
+                document.getElementById('settingsView').style.display = 'flex';
+                backToSettingsMain(); // 每次进设置先回退到主菜单
+            } else {
+                document.getElementById('tab-library').classList.add('active');
+                document.getElementById('libraryView').style.display = 'flex';
+                renderLibrary();
+            }
+        }
+
+        /* ======= 设置子系统导航 ======= */
+        function openSettingsSubView(viewId) {
+            document.getElementById('settingsMainMenu').style.display = 'none';
+            document.getElementById('apiConfigSubView').style.display = 'none';
+            document.getElementById('dataStorageSubView').style.display = 'none';
+            document.getElementById(viewId).style.display = 'block';
+        }
+        function backToSettingsMain() {
+            document.getElementById('apiConfigSubView').style.display = 'none';
+            document.getElementById('dataStorageSubView').style.display = 'none';
+            document.getElementById('settingsMainMenu').style.display = 'block';
+        }
+
+        /* ======= 聊天室对话 ======= */
+        function renderChat() {
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = '';
+            
+            const visibleMsgs = chatHistory.filter(m => m.role !== 'system');
+            
+            if(visibleMsgs.length === 0) {
+                chatBox.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:14px;">随时输入大纲或灵感，和我一起创造人设吧！</div>';
+                return;
+            }
+
+            visibleMsgs.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'message ' + (msg.role === 'user' ? 'msg-user' : 'msg-ai');
+                div.innerHTML = msg.content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                chatBox.appendChild(div);
+            });
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const chatBox = document.getElementById('chatBox');
+            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (!currentApiUrl || !currentApiKey || !currentModel) {
+                return alert('请先在【设置】中填写 API 配置并拉取选择模型！');
+            }
+
+            chatHistory.push({ role: 'user', content: text });
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            input.value = '';
+            input.style.height = '';
+            renderChat();
+
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${currentApiUrl}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+                    body: JSON.stringify({ model: currentModel, messages: chatHistory })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                
+                chatHistory.push({ role: 'assistant', content: data.choices[0].message.content });
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                renderChat();
+            } catch (error) {
+                alert('发送失败，请检查网络或 API 配置。\n错误: ' + error.message);
+                chatHistory.pop();
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                renderChat();
+                input.value = text; 
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        function clearChat() {
+            if(!confirm('确定要清空当前的全部对话记录吗？')) return;
+            chatHistory = [ chatHistory[0] ];
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            renderChat();
+        }
+
+        /* ======= API 配置与预设更新逻辑 ======= */
+        function updateActiveConfig() {
+            currentApiUrl = document.getElementById('activeUrl').value.trim();
+            currentApiKey = document.getElementById('activeKey').value.trim();
+            currentModel = document.getElementById('activeModel').value;
+            localStorage.setItem('currentApiUrl', currentApiUrl);
+            localStorage.setItem('currentApiKey', currentApiKey);
+            localStorage.setItem('currentModel', currentModel);
+        }
+
+        async function fetchModels() {
+            if (!currentApiUrl || !currentApiKey) return alert('请先填写反代地址和密钥！');
+            const btn = document.getElementById('fetchBtn');
+            btn.innerHTML = '拉取中...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${currentApiUrl}/models`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${currentApiKey}` }
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                
+                if (data.data && Array.isArray(data.data)) {
+                    availableModels = data.data.map(m => m.id);
+                    localStorage.setItem('availableModels', JSON.stringify(availableModels));
+                    renderModelSelect();
+                    alert('拉取成功！请在下方选择模型。');
+                } else {
+                    throw new Error('API 返回的数据格式无法识别');
+                }
+            } catch (error) {
+                alert('拉取失败，请检查反代地址或密钥。\n错误: ' + error.message);
+            } finally {
+                btn.innerHTML = '<svg class="flex-center" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 拉取模型';
+                btn.disabled = false;
+            }
+        }
+
+        function renderModelSelect() {
+            const select = document.getElementById('activeModel');
+            select.innerHTML = '<option value="">-- 选择模型 --</option>';
+            availableModels.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = m;
+                if (m === currentModel) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function saveActiveAsPreset() {
+            const note = document.getElementById('activeNote').value.trim();
+            const url = document.getElementById('activeUrl').value.trim();
+            const key = document.getElementById('activeKey').value.trim();
+            
+            if (!url || !key) return alert('反代地址和密钥不能为空！');
+            
+            // 若之前从库中应用了预设，则执行覆盖更新
+            if (activePresetId) {
+                const index = savedApis.findIndex(a => a.id === activePresetId);
+                if (index > -1) {
+                    savedApis[index].url = url;
+                    savedApis[index].key = key;
+                    if (note) savedApis[index].note = note;
+                    localStorage.setItem('savedApis', JSON.stringify(savedApis));
+                    document.getElementById('activeNote').value = '';
+                    alert('该预设的配置更新成功！');
+                    return;
+                }
+            }
+            
+            // 否则录入一个全新的基础节点
+            const newId = Date.now().toString();
+            savedApis.push({ 
+                id: newId, 
+                name: note || '备用未命名', 
+                note: note, 
+                url, key, 
+                stars: '3', 
+                price: '免费' 
+            });
+            localStorage.setItem('savedApis', JSON.stringify(savedApis));
+            activePresetId = newId;
+            localStorage.setItem('activePresetId', activePresetId);
+            document.getElementById('activeNote').value = '';
+            alert('已保存为新预设！可在预设库中查看。');
+        }
+
+        /* ======= 数据储存统计与导入/导出 ======= */
+        function getStringBytes(str) { return new Blob([str || '']).size; }
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateStorageStats() {
+            const sizePersona = getStringBytes(localStorage.getItem('chatHistory') || '[]');
+            const sizeLib = getStringBytes(localStorage.getItem('savedApis') || '[]');
+            const sizeApi = getStringBytes((localStorage.getItem('currentApiUrl')||'') + (localStorage.getItem('currentApiKey')||'') + (localStorage.getItem('currentModel')||'') + (localStorage.getItem('availableModels')||'[]'));
+            const sizeTotal = sizePersona + sizeLib + sizeApi;
+
+            document.getElementById('sizePersonaTxt').innerText = formatBytes(sizePersona);
+            document.getElementById('sizeLibTxt').innerText = formatBytes(sizeLib);
+            document.getElementById('sizeApiTxt').innerText = formatBytes(sizeApi);
+            document.getElementById('totalSizeTxt').innerText = formatBytes(sizeTotal);
+
+            if (sizeTotal > 0) {
+                document.getElementById('barPersona').style.width = ((sizePersona / sizeTotal) * 100) + '%';
+                document.getElementById('barApi').style.width = ((sizeApi / sizeTotal) * 100) + '%';
+                document.getElementById('barLib').style.width = ((sizeLib / sizeTotal) * 100) + '%';
+            } else {
+                document.getElementById('barPersona').style.width = '0%';
+                document.getElementById('barApi').style.width = '0%';
+                document.getElementById('barLib').style.width = '0%';
+            }
+        }
+
+        function exportAllData() {
+            const allData = {
+                chatHistory, savedApis, currentApiUrl, currentApiKey, currentModel,
+                availableModels: JSON.parse(localStorage.getItem('availableModels') || '[]'),
+                activePresetId
+            };
+            downloadDataFile(JSON.stringify(allData, null, 2), 'PersonaApp_AllData.json', 'application/json');
+        }
+
+        function importAllData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.chatHistory) localStorage.setItem('chatHistory', JSON.stringify(data.chatHistory));
+                    if (data.savedApis) localStorage.setItem('savedApis', JSON.stringify(data.savedApis));
+                    if (data.currentApiUrl !== undefined) localStorage.setItem('currentApiUrl', data.currentApiUrl);
+                    if (data.currentApiKey !== undefined) localStorage.setItem('currentApiKey', data.currentApiKey);
+                    if (data.currentModel !== undefined) localStorage.setItem('currentModel', data.currentModel);
+                    if (data.availableModels) localStorage.setItem('availableModels', JSON.stringify(data.availableModels));
+                    if (data.activePresetId !== undefined) localStorage.setItem('activePresetId', data.activePresetId);
+                    
+                    chatHistory = data.chatHistory || [];
+                    savedApis = data.savedApis || [];
+                    currentApiUrl = data.currentApiUrl || '';
+                    currentApiKey = data.currentApiKey || '';
+                    currentModel = data.currentModel || '';
+                    activePresetId = data.activePresetId || '';
+                    
+                    document.getElementById('activeUrl').value = currentApiUrl;
+                    document.getElementById('activeKey').value = currentApiKey;
+                    renderModelSelect();
+                    renderChat();
+                    renderLibrary();
+                    updateStorageStats();
+                    alert('全部数据导入成功！');
+                } catch(err) {
+                    alert('导入失败：文件损坏或格式错误。');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        /* ======= API预设库：显示、星星、复制功能 ======= */
+        function copyText(text) {
+            if(!text) return;
+            navigator.clipboard.writeText(text)
+                .then(() => alert('已成功复制到剪贴板'))
+                .catch(() => alert('复制失败，请手动选取复制'));
+        }
+
+        function toggleKey(id) {
+            const input = document.getElementById(id);
+            if(input.type === 'password') input.type = 'text';
+            else input.type = 'password';
+        }
+
+        function toggleAddForm() {
+            const form = document.getElementById('addApiForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            if (form.style.display === 'block') {
+                document.getElementById('libName').value = '';
+                document.getElementById('libUrl').value = '';
+                document.getElementById('libKey').value = '';
+            }
+        }
+
+        function saveLibraryApi() {
+            const name = document.getElementById('libName').value.trim();
+            const url = document.getElementById('libUrl').value.trim();
+            const key = document.getElementById('libKey').value.trim();
+            const stars = document.getElementById('libStars').value;
+            const price = document.getElementById('libPrice').value;
+
+            if (!name || !url || !key) return alert('名字、地址和密钥为必填！');
+
+            savedApis.push({ id: Date.now().toString(), name, url, key, stars, price });
+            localStorage.setItem('savedApis', JSON.stringify(savedApis));
+            document.getElementById('addApiForm').style.display = 'none';
+            renderLibrary();
+        }
+
+        function applyLibraryApi(id) {
+            const api = savedApis.find(a => a.id === id);
+            if (!api) return;
+            
+            activePresetId = api.id;
+            localStorage.setItem('activePresetId', activePresetId);
+            document.getElementById('activeUrl').value = api.url;
+            document.getElementById('activeKey').value = api.key;
+            document.getElementById('activeNote').value = api.note || '';
+            updateActiveConfig();
+            
+            alert(`已应用：${api.name}，请前往“设置->API配置”面板拉取模型。`);
+            switchTab('settings');
+            openSettingsSubView('apiConfigSubView');
+        }
+
+        function deleteLibraryApi(id) {
+            if(!confirm('确定要删除该站子吗？')) return;
+            savedApis = savedApis.filter(api => api.id !== id);
+            localStorage.setItem('savedApis', JSON.stringify(savedApis));
+            if (activePresetId === id) { activePresetId = ''; localStorage.removeItem('activePresetId'); }
+            renderLibrary();
+        }
+
+        function getStarsSvg(count) {
+            const starSvg = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+            let html = '';
+            for(let i=0; i<parseInt(count || 3); i++) html += starSvg;
+            return html;
+        }
+
+        function renderLibrary() {
+            const query = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+            const list = document.getElementById('apiList');
+            list.innerHTML = '';
+            
+            const filtered = savedApis.filter(api => (api.name && api.name.toLowerCase().includes(query)));
+            
+            filtered.forEach(api => {
+                const card = document.createElement('div');
+                card.className = 'api-card';
+                card.innerHTML = `
+                    <div class="api-card-header">
+                        <h4>${api.name || '未命名站子'}</h4>
+                        <div class="api-badges">
+                            <span class="api-badge">${api.price || '未知'}</span>
+                            <span class="api-stars">${getStarsSvg(api.stars)}</span>
+                        </div>
+                    </div>
+                    <div class="api-info-row">
+                        <span class="api-info-label">地址</span>
+                        <input type="text" value="${api.url}" readonly>
+                        <button class="icon-btn" onclick="copyText('${api.url}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    </div>
+                    <div class="api-info-row">
+                        <span class="api-info-label">密钥</span>
+                        <input type="password" id="key_${api.id}" value="${api.key}" readonly>
+                        <button class="icon-btn" onclick="toggleKey('key_${api.id}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                        <button class="icon-btn" onclick="copyText('${api.key}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    </div>
+                    <div class="api-actions">
+                        <button class="action-btn flex-center" onclick="applyLibraryApi('${api.id}')">应用</button>
+                        <button class="action-btn action-danger flex-center" onclick="deleteLibraryApi('${api.id}')">删除</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        /* ======= 聊天文件导出 ======= */
+        function exportChat() {
+            const visibleMsgs = chatHistory.filter(m => m.role !== 'system');
+            if (visibleMsgs.length === 0) return alert('没有记录可导出。');
+            let content = '';
+            visibleMsgs.forEach(msg => {
+                const roleName = msg.role === 'user' ? '【我】' : '【AI 设定师】';
+                content += `${roleName}：\n${msg.content}\n\n`;
+            });
+            let filename = document.getElementById('filename').value.trim() || '人物设定对话记录';
+            const format = document.getElementById('exportFormat').value;
+
+            if (format === 'txt') {
+                downloadDataFile(content, `${filename}.txt`, 'text/plain;charset=utf-8');
+            } else if (format === 'doc') {
+                const formattedContent = content.replace(/\n/g, '<br>');
+                const htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${filename}</title></head><body style="font-family: 'Microsoft YaHei', sans-serif; line-height: 1.6;">${formattedContent}</body></html>`;
+                downloadDataFile(htmlContent, `${filename}.doc`, 'application/msword;charset=utf-8');
+            }
+        }
+        function downloadDataFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
