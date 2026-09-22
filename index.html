@@ -388,6 +388,10 @@
                     <button class="btn-secondary flex-center" onclick="saveActiveAsPreset()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> 保存更改至预设
                     </button>
+                    
+                    <div class="divider"></div>
+                    <h2 class="panel-title">快捷配置预设</h2>
+                    <div class="api-list" id="configPresetList"></div>
                 </div>
 
                 <!-- 数据储存子页面 -->
@@ -514,6 +518,7 @@
         let currentSessionId = null;
 
         let savedApis = JSON.parse(localStorage.getItem('savedApis')) || [];
+        let configPresets = JSON.parse(localStorage.getItem('configPresets')) || []; // 新增：API配置专属预设库
         let currentApiUrl = localStorage.getItem('currentApiUrl') || '';
         let currentApiKey = localStorage.getItem('currentApiKey') || '';
         let currentModel = localStorage.getItem('currentModel') || '';
@@ -530,6 +535,7 @@
             }
             renderSessionList();
             renderLibrary();
+            renderConfigPresets(); // 渲染专属预设
         };
 
         function switchTab(tab) {
@@ -539,6 +545,7 @@
             document.getElementById('chatView').style.display = 'none';
             document.getElementById('settingsView').style.display = 'none';
             document.getElementById('libraryView').style.display = 'none';
+            document.querySelector('.bottom-dock').style.display = 'flex'; // 确保底栏显示
 
             if (tab === 'chat') {
                 document.getElementById('tab-chat').classList.add('active');
@@ -612,6 +619,7 @@
             currentSessionId = id;
             document.getElementById('sessionListView').style.display = 'none';
             document.getElementById('chatRoomView').style.display = 'flex';
+            document.querySelector('.bottom-dock').style.display = 'none'; // 进入聊天室自动隐藏底部栏
             
             const session = chatSessions.find(s => s.id === id);
             document.getElementById('chatRoomTitle').innerText = session.title;
@@ -622,6 +630,7 @@
             currentSessionId = null;
             document.getElementById('chatRoomView').style.display = 'none';
             document.getElementById('sessionListView').style.display = 'block';
+            document.querySelector('.bottom-dock').style.display = 'flex'; // 离开聊天室恢复底部栏
             renderSessionList();
         }
 
@@ -899,26 +908,80 @@
             const key = document.getElementById('activeKey').value.trim();
             if (!url || !key) return alert('反代地址和密钥不能为空！');
             
+            // 如果是在现有的配置预设上更新
             if (activePresetId) {
-                const index = savedApis.findIndex(a => a.id === activePresetId);
+                const index = configPresets.findIndex(a => a.id === activePresetId);
                 if (index > -1) {
-                    savedApis[index].url = url;
-                    savedApis[index].key = key;
-                    if (note) savedApis[index].note = note;
-                    localStorage.setItem('savedApis', JSON.stringify(savedApis));
+                    configPresets[index].url = url;
+                    configPresets[index].key = key;
+                    if (note) configPresets[index].note = note;
+                    localStorage.setItem('configPresets', JSON.stringify(configPresets));
                     document.getElementById('activeNote').value = '';
-                    alert('该预设的配置更新成功！');
+                    alert('配置更新成功！');
+                    renderConfigPresets();
                     return;
                 }
             }
             
+            // 否则作为一条全新【快捷配置】存入（不污染API库）
             const newId = Date.now().toString();
-            savedApis.push({ id: newId, name: note || '备用未命名', note: note, url, key, stars: '3', price: '免费' });
-            localStorage.setItem('savedApis', JSON.stringify(savedApis));
+            configPresets.push({ id: newId, note: note || '未命名配置', url, key });
+            localStorage.setItem('configPresets', JSON.stringify(configPresets));
             activePresetId = newId;
             localStorage.setItem('activePresetId', activePresetId);
             document.getElementById('activeNote').value = '';
-            alert('已保存为新预设！可在预设库中查看。');
+            alert('已保存为全新配置预设！');
+            renderConfigPresets();
+        }
+
+        function applyConfigPreset(id) {
+            const preset = configPresets.find(p => p.id === id);
+            if (!preset) return;
+            activePresetId = preset.id;
+            localStorage.setItem('activePresetId', activePresetId);
+            document.getElementById('activeUrl').value = preset.url;
+            document.getElementById('activeKey').value = preset.key;
+            document.getElementById('activeNote').value = preset.note || '';
+            updateActiveConfig();
+            alert(`已应用配置预设：${preset.note}\n请检查并拉取模型。`);
+        }
+
+        function deleteConfigPreset(id) {
+            if(!confirm('确定要删除这条快捷配置吗？')) return;
+            configPresets = configPresets.filter(p => p.id !== id);
+            localStorage.setItem('configPresets', JSON.stringify(configPresets));
+            if (activePresetId === id) { activePresetId = ''; localStorage.removeItem('activePresetId'); }
+            renderConfigPresets();
+        }
+
+        function renderConfigPresets() {
+            const list = document.getElementById('configPresetList');
+            if(!list) return;
+            list.innerHTML = '';
+            if(configPresets.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:13px; padding: 10px;">暂无快捷配置预设</div>';
+                return;
+            }
+            configPresets.forEach(preset => {
+                const card = document.createElement('div');
+                card.className = 'api-info-row';
+                card.style.justifyContent = 'space-between';
+                card.innerHTML = `
+                    <div style="flex:1; overflow:hidden;">
+                        <div style="font-weight:600; font-size:14px; color:var(--text-main); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${preset.note || '未命名'}</div>
+                        <div style="font-size:12px; color:var(--text-muted); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${preset.url}</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="icon-btn" style="background:#E5E5EA; color:var(--text-main);" onclick="applyConfigPreset('${preset.id}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </button>
+                        <button class="icon-btn" style="background:#FFEBEA; color:#FF3B30;" onclick="deleteConfigPreset('${preset.id}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
         }
 
         /* ======= 数据储存统计 ======= */
@@ -933,7 +996,8 @@
         function updateStorageStats() {
             const sizePersona = getStringBytes(localStorage.getItem('chatSessions') || '[]');
             const sizeLib = getStringBytes(localStorage.getItem('savedApis') || '[]');
-            const sizeApi = getStringBytes((localStorage.getItem('currentApiUrl')||'') + (localStorage.getItem('currentApiKey')||'') + (localStorage.getItem('currentModel')||'') + (localStorage.getItem('availableModels')||'[]'));
+            // 计算配置内存时把 configPresets 也算上
+            const sizeApi = getStringBytes((localStorage.getItem('currentApiUrl')||'') + (localStorage.getItem('currentApiKey')||'') + (localStorage.getItem('currentModel')||'') + (localStorage.getItem('availableModels')||'[]') + (localStorage.getItem('configPresets')||'[]'));
             const sizeTotal = sizePersona + sizeLib + sizeApi;
 
             document.getElementById('sizePersonaTxt').innerText = formatBytes(sizePersona);
@@ -954,7 +1018,7 @@
 
         function exportAllData() {
             const allData = {
-                chatSessions, savedApis, currentApiUrl, currentApiKey, currentModel, activePresetId,
+                chatSessions, savedApis, configPresets, currentApiUrl, currentApiKey, currentModel, activePresetId,
                 availableModels: JSON.parse(localStorage.getItem('availableModels') || '[]')
             };
             downloadDataFile(JSON.stringify(allData, null, 2), 'PersonaApp_AllData.json', 'application/json');
@@ -969,6 +1033,7 @@
                     const data = JSON.parse(e.target.result);
                     if (data.chatSessions) localStorage.setItem('chatSessions', JSON.stringify(data.chatSessions));
                     if (data.savedApis) localStorage.setItem('savedApis', JSON.stringify(data.savedApis));
+                    if (data.configPresets) localStorage.setItem('configPresets', JSON.stringify(data.configPresets));
                     if (data.currentApiUrl !== undefined) localStorage.setItem('currentApiUrl', data.currentApiUrl);
                     if (data.currentApiKey !== undefined) localStorage.setItem('currentApiKey', data.currentApiKey);
                     if (data.currentModel !== undefined) localStorage.setItem('currentModel', data.currentModel);
@@ -977,6 +1042,7 @@
                     
                     chatSessions = data.chatSessions || [];
                     savedApis = data.savedApis || [];
+                    configPresets = data.configPresets || [];
                     currentApiUrl = data.currentApiUrl || '';
                     currentApiKey = data.currentApiKey || '';
                     currentModel = data.currentModel || '';
@@ -986,6 +1052,7 @@
                     document.getElementById('activeKey').value = currentApiKey;
                     renderSessionList();
                     renderLibrary();
+                    renderConfigPresets();
                     updateStorageStats();
                     alert('全部数据导入成功！');
                 } catch(err) { alert('导入失败：文件损坏或格式错误。'); }
@@ -1013,7 +1080,7 @@
             const name = document.getElementById('libName').value.trim();
             const url = document.getElementById('libUrl').value.trim();
             const key = document.getElementById('libKey').value.trim();
-            const note = document.getElementById('libNote').value.trim(); // 恢复的备注
+            const note = document.getElementById('libNote').value.trim();
             const stars = document.getElementById('libStars').value;
             const price = document.getElementById('libPrice').value;
 
@@ -1026,11 +1093,15 @@
         function applyLibraryApi(id) {
             const api = savedApis.find(a => a.id === id);
             if (!api) return;
-            activePresetId = api.id;
-            localStorage.setItem('activePresetId', activePresetId);
+            
+            // 重要：从储存库应用属于“脱机复制”，为了防止在配置页手滑更新破坏原来的库文件，
+            // 必须解绑配置预设 ID，使其处于全新空白状态
+            activePresetId = '';
+            localStorage.removeItem('activePresetId');
+            
             document.getElementById('activeUrl').value = api.url;
             document.getElementById('activeKey').value = api.key;
-            document.getElementById('activeNote').value = api.note || '';
+            document.getElementById('activeNote').value = api.name || '';
             updateActiveConfig();
             alert(`已应用：${api.name}，请前往“设置->API配置”面板检查模型。`);
             switchTab('settings');
