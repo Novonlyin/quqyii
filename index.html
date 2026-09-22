@@ -84,12 +84,7 @@
             justify-content: center;
         }
 
-        .dock-btn svg {
-            width: 26px;
-            height: 26px;
-            stroke-width: 2.2;
-        }
-
+        .dock-btn svg { width: 26px; height: 26px; stroke-width: 2.2; }
         .dock-btn.active {
             color: var(--text-main);
             background: var(--input-bg);
@@ -111,137 +106,102 @@
             box-sizing: border-box;
         }
 
-        /* ----- 视图一：聊天生成器 ----- */
-        .export-bar {
-            display: flex;
-            gap: 8px;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
-            background: #FAFAFA;
+        /* ----- 视图一：聊天列表 & 房间 ----- */
+        .session-list { display: flex; flex-direction: column; gap: 12px; }
+        .session-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #FFFFFF; border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 16px; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: 0.2s;
         }
-        .export-bar input, .export-bar select, .export-bar button {
-            padding: 8px 12px;
-            font-size: 13px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            outline: none;
-            background: #fff;
-            color: var(--text-main);
-            font-family: inherit;
+        .session-item:active { background: var(--input-bg); }
+        .session-title { font-weight: 600; font-size: 16px; color: var(--text-main); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .session-count { font-size: 13px; color: var(--text-muted); margin-right: 12px; }
+        .session-delete {
+            color: #FF3B30; background: transparent; border: none; padding: 8px;
+            border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
-        .export-bar input { flex: 2; }
-        .export-bar select { flex: 1; }
-        .export-bar button {
-            background: var(--input-bg);
-            cursor: pointer;
-            font-weight: 500;
-            border: none;
+        
+        .chat-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 10;
         }
-        .export-bar button:active { background: #E5E5EA; }
+        .chat-header-title { font-size: 16px; font-weight: 600; }
+        .back-nav-btn {
+            background: transparent; border: none; color: var(--text-main);
+            display: inline-flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; cursor: pointer; padding: 0;
+        }
 
-        .chat-box {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .message {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-        .msg-user {
-            align-self: flex-end;
-            background: var(--btn-bg);
-            color: #FFFFFF;
-            border-bottom-right-radius: 4px;
-        }
-        .msg-ai {
-            align-self: flex-start;
-            background: var(--input-bg);
-            color: var(--text-main);
-            border-bottom-left-radius: 4px;
-        }
+        .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; word-wrap: break-word; }
+        .msg-user { align-self: flex-end; background: var(--btn-bg); color: #FFFFFF; border-bottom-right-radius: 4px; }
+        .msg-ai { align-self: flex-start; background: var(--input-bg); color: var(--text-main); border-bottom-left-radius: 4px; }
 
         .chat-input-area {
-            padding: 12px 16px;
-            background: #FAFAFA;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
+            padding: 12px 16px; background: #FAFAFA; border-top: 1px solid var(--border-color);
+            display: flex; gap: 8px; align-items: flex-end; position: relative;
         }
         .chat-input-area textarea {
-            flex: 1;
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 18px;
-            padding: 12px 16px;
-            font-size: 15px;
-            resize: none;
-            min-height: 22px;
-            max-height: 120px;
-            outline: none;
-            font-family: inherit;
+            flex: 1; background: #FFFFFF; border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 10px 14px; font-size: 15px; resize: none;
+            min-height: 20px; max-height: 120px; outline: none; font-family: inherit;
         }
-        .chat-input-area button {
-            background: var(--btn-bg);
-            color: var(--btn-text);
-            border: none;
-            border-radius: 18px;
-            height: 46px;
-            padding: 0 16px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
+        .action-circle-btn {
+            background: var(--input-bg); color: var(--text-main); border: none;
+            border-radius: 50%; width: 42px; height: 42px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
         }
-        .chat-input-area button:disabled { opacity: 0.5; }
+        .action-circle-btn:active { background: #E5E5EA; }
+        .action-circle-btn.primary { background: var(--btn-bg); color: #FFF; }
+        .action-circle-btn.primary:active { opacity: 0.8; }
+        .action-circle-btn svg { width: 20px; height: 20px; stroke-width: 2.2; }
+
+        /* 悬浮菜单 (导出) */
+        .plus-menu {
+            position: absolute; bottom: 65px; left: 16px; background: #FFFFFF;
+            border: 1px solid var(--border-color); border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08); overflow: hidden;
+            display: flex; flex-direction: column; width: 120px; z-index: 30;
+            transform-origin: bottom left; animation: popIn 0.2s ease-out;
+        }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .plus-menu-item {
+            background: transparent; border: none; padding: 14px 16px;
+            display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500;
+            color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color);
+        }
+        .plus-menu-item:last-child { border-bottom: none; }
+        .plus-menu-item:active { background: var(--input-bg); }
+        .plus-menu-item svg { width: 18px; height: 18px; }
+
+        /* 模态框 (导出弹窗) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            z-index: 100; display: none; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: #FFFFFF; width: 85%; max-width: 320px; border-radius: 20px;
+            padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;
+        }
+        .modal-title { font-size: 18px; font-weight: 700; text-align: center; margin: 0; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
 
         /* ----- 表单与按钮通用 ----- */
         .form-group { margin-bottom: 16px; }
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
         .form-group input, .form-group select {
-            width: 100%;
-            box-sizing: border-box;
-            background: var(--input-bg);
-            border: 1px solid transparent;
-            border-radius: 12px;
-            padding: 14px 16px;
-            font-size: 15px;
-            outline: none;
-            transition: 0.2s;
-            font-family: inherit;
-            color: var(--text-main);
+            width: 100%; box-sizing: border-box; background: var(--input-bg);
+            border: 1px solid transparent; border-radius: 12px; padding: 14px 16px;
+            font-size: 15px; outline: none; transition: 0.2s; font-family: inherit; color: var(--text-main);
         }
-        .form-group input:focus, .form-group select:focus {
-            background: #FFF;
-            border: 1px solid var(--text-main);
-        }
+        .form-group input:focus, .form-group select:focus { background: #FFF; border: 1px solid var(--text-main); }
         
-        .btn-primary, .btn-secondary {
-            width: 100%;
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            border: none;
-        }
+        .btn-primary, .btn-secondary { width: 100%; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; border: none; }
         .btn-primary { background: var(--btn-bg); color: #FFF; }
         .btn-primary:active { opacity: 0.8; }
-        
         .btn-secondary { background: #FFF; color: var(--text-main); border: 1px solid var(--border-color); }
         .btn-secondary:active { background: var(--input-bg); }
 
@@ -249,48 +209,14 @@
         .panel-title { font-size: 18px; font-weight: 700; margin-top: 0; margin-bottom: 20px; }
         
         /* ----- 视图二：设置系统 ----- */
-        .ios-menu-group {
-            background: #FFFFFF;
-            border-radius: 14px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 24px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.01);
-        }
-        .ios-menu-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 16px 20px;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-main);
-            cursor: pointer;
-            font-family: inherit;
-        }
+        .ios-menu-group { background: #FFFFFF; border-radius: 14px; border: 1px solid var(--border-color); margin-bottom: 24px; overflow: hidden; }
+        .ios-menu-item { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 16px 20px; background: transparent; border: none; border-bottom: 1px solid var(--border-color); font-size: 16px; font-weight: 500; color: var(--text-main); cursor: pointer; }
         .ios-menu-item:active { background: var(--input-bg); }
         .ios-menu-item:last-child { border-bottom: none; }
         .ios-menu-item .menu-icon { display: flex; align-items: center; gap: 12px; }
         .ios-menu-item .chevron { color: #C7C7CC; }
 
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-size: 16px;
-            font-weight: 600;
-            padding: 0;
-            cursor: pointer;
-            margin-bottom: 24px;
-            font-family: inherit;
-        }
+        .back-btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: none; color: var(--text-main); font-size: 16px; font-weight: 600; padding: 0; cursor: pointer; margin-bottom: 24px; }
         .back-btn:active { opacity: 0.7; }
         
         /* 数据储存统计占比 */
@@ -302,7 +228,6 @@
         .segment-persona { background: var(--color-persona); }
         .segment-api { background: var(--color-api); }
         .segment-lib { background: var(--color-lib); }
-        
         .storage-legend { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
         .legend-item { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 500; color: var(--text-main); }
         .legend-left { display: flex; align-items: center; gap: 8px; }
@@ -316,77 +241,24 @@
         #addApiForm { background: #FAFAFA; padding: 16px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px; }
         
         .api-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px; }
-        .api-card {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-        }
-        .api-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
+        .api-card { background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .api-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .api-card-header h4 { margin: 0; font-size: 16px; font-weight: 600; }
+        .api-note { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
         
         .api-badges { display: flex; align-items: center; gap: 6px; }
-        .api-badge {
-            font-size: 11px;
-            background: var(--text-main);
-            color: #FFF;
-            padding: 3px 8px;
-            border-radius: 8px;
-            font-weight: 600;
-        }
+        .api-badge { font-size: 11px; background: var(--text-main); color: #FFF; padding: 3px 8px; border-radius: 8px; font-weight: 600; }
         .api-stars { display: flex; color: var(--text-main); gap: 2px; }
         .api-stars svg { width: 12px; height: 12px; }
 
-        .api-info-row {
-            display: flex;
-            align-items: center;
-            background: var(--input-bg);
-            border-radius: 10px;
-            padding: 6px 12px;
-            margin-bottom: 8px;
-            gap: 8px;
-        }
-        .api-info-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-        .api-info-row input {
-            flex: 1;
-            border: none;
-            background: transparent;
-            color: var(--text-main);
-            font-size: 13px;
-            outline: none;
-            width: 100%;
-            font-family: inherit;
-        }
-        .icon-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-        }
+        .api-info-row { display: flex; align-items: center; background: var(--input-bg); border-radius: 10px; padding: 6px 12px; margin-bottom: 8px; gap: 8px; }
+        .api-info-label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+        .api-info-row input { flex: 1; border: none; background: transparent; color: var(--text-main); font-size: 13px; outline: none; width: 100%; font-family: inherit; }
+        .icon-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
         .icon-btn:active { background: #E5E5EA; color: var(--text-main); }
         .icon-btn svg { width: 16px; height: 16px; }
-
         .api-actions { display: flex; gap: 8px; margin-top: 12px; }
-        .action-btn {
-            flex: 1; background: var(--input-bg); border: none; padding: 10px 0;
-            border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer;
-        }
+        .action-btn { flex: 1; background: var(--input-bg); border: none; padding: 10px 0; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer; }
         .action-btn:active { background: #E5E5EA; }
         .action-danger { color: #FF3B30; }
     </style>
@@ -395,35 +267,61 @@
 
     <div class="app-container">
         <div class="view-content">
-            <!-- 视图一：人设生成器 -->
+            
+            <!-- 视图一：聊天列表 & 生成器 -->
             <div id="chatView" style="display: flex; flex-direction: column; height: 100%;">
-                <div class="export-bar">
-                    <input type="text" id="filename" placeholder="文件名 (如: 男主设定)">
-                    <select id="exportFormat">
-                        <option value="txt">.txt</option>
-                        <option value="doc">.doc</option>
-                    </select>
-                    <button onclick="exportChat()" class="flex-center">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+                
+                <!-- 列表界面 -->
+                <div id="sessionListView" style="padding: 20px 16px; display: block; flex: 1;">
+                    <h2 class="panel-title">我的人设簿</h2>
+                    <button class="btn-primary flex-center" style="margin-bottom: 20px;" onclick="createNewSession()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 
+                        新建人设聊天
                     </button>
-                    <button onclick="clearChat()" style="margin-left:auto; color:#FF3B30; background:transparent;" class="flex-center">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
+                    <div class="session-list" id="sessionList"></div>
                 </div>
-                
-                <div class="chat-box" id="chatBox"></div>
-                
-                <div class="chat-input-area">
-                    <textarea id="chatInput" placeholder="输入你想生成的大纲..." rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
-                    <button id="sendBtn" onclick="sendMessage()" class="flex-center">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    </button>
+
+                <!-- 单独聊天界面 -->
+                <div id="chatRoomView" style="display: none; flex-direction: column; height: 100%;">
+                    <div class="chat-header">
+                        <button class="back-nav-btn" onclick="closeChatRoom()">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            返回
+                        </button>
+                        <div class="chat-header-title" id="chatRoomTitle">新建人设</div>
+                        <div style="width: 50px;"></div> <!-- 占位保持居中 -->
+                    </div>
+
+                    <div class="chat-box" id="chatBox"></div>
+                    
+                    <div class="chat-input-area">
+                        <!-- 加号展开悬浮菜单 -->
+                        <div class="plus-menu" id="plusMenu" style="display: none;">
+                            <button class="plus-menu-item" onclick="openExportModal()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+                                <span>导出</span>
+                            </button>
+                        </div>
+
+                        <button class="action-circle-btn" onclick="togglePlusMenu()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                        
+                        <textarea id="chatInput" placeholder="输入大纲..." rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                        
+                        <button class="action-circle-btn" onclick="sendMessage()" title="发送不上屏">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                        </button>
+                        
+                        <button class="action-circle-btn primary" id="generateBtn" onclick="generateReply()" title="生成AI回复">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- 视图二：设置系统 -->
             <div id="settingsView" class="view-panel">
-                <!-- 设置主菜单 -->
                 <div id="settingsMainMenu" style="display: block;">
                     <div class="ios-menu-group">
                         <button class="ios-menu-item" onclick="openSettingsSubView('apiConfigSubView')">
@@ -443,7 +341,7 @@
                     </div>
                 </div>
 
-                <!-- API 配置子页面 (修改并保存预设) -->
+                <!-- API 配置子页面 -->
                 <div id="apiConfigSubView" style="display: none;">
                     <button class="back-btn" onclick="backToSettingsMain()">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
@@ -461,9 +359,17 @@
                     <button class="btn-primary flex-center" id="fetchBtn" onclick="fetchModels()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 拉取模型
                     </button>
-                    <div class="form-group" style="margin-top:20px;">
+                    
+                    <!-- 正常拉取时的下拉框 -->
+                    <div class="form-group" style="margin-top:20px;" id="autoModelGroup">
                         <label>选择模型</label>
                         <select id="activeModel" onchange="updateActiveConfig()"></select>
+                    </div>
+
+                    <!-- 拉取失败时的兜底手动输入框 -->
+                    <div class="form-group" id="manualModelGroup" style="display: none; margin-top: 15px;">
+                        <label style="color: #FF3B30;">拉取受限，请手动填写模型名称</label>
+                        <input type="text" id="manualModel" placeholder="例如: gpt-3.5-turbo" oninput="updateManualModel()">
                     </div>
 
                     <div class="divider"></div>
@@ -483,35 +389,21 @@
                     <button class="back-btn" onclick="backToSettingsMain()">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
                     </button>
-
                     <div class="storage-header">
                         <div class="storage-title">此工具占用内存</div>
                         <div class="storage-total" id="totalSizeTxt">0 KB</div>
                     </div>
-                    
                     <div class="storage-bar">
                         <div class="storage-segment segment-persona" id="barPersona" style="width: 0%;"></div>
                         <div class="storage-segment segment-api" id="barApi" style="width: 0%;"></div>
                         <div class="storage-segment segment-lib" id="barLib" style="width: 0%;"></div>
                     </div>
-
                     <div class="storage-legend">
-                        <div class="legend-item">
-                            <div class="legend-left"><div class="legend-dot segment-persona"></div> 生成的人设数据</div>
-                            <div id="sizePersonaTxt">0 KB</div>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-left"><div class="legend-dot segment-api"></div> API 配置数据</div>
-                            <div id="sizeApiTxt">0 KB</div>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-left"><div class="legend-dot segment-lib"></div> API 库存储数据</div>
-                            <div id="sizeLibTxt">0 KB</div>
-                        </div>
+                        <div class="legend-item"><div class="legend-left"><div class="legend-dot segment-persona"></div> 人设聊天数据</div><div id="sizePersonaTxt">0 KB</div></div>
+                        <div class="legend-item"><div class="legend-left"><div class="legend-dot segment-api"></div> API 配置数据</div><div id="sizeApiTxt">0 KB</div></div>
+                        <div class="legend-item"><div class="legend-left"><div class="legend-dot segment-lib"></div> API 库存储数据</div><div id="sizeLibTxt">0 KB</div></div>
                     </div>
-
                     <div class="divider"></div>
-
                     <h2 class="panel-title">数据管理</h2>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <button class="btn-primary flex-center" onclick="exportAllData()">
@@ -536,38 +428,23 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 录入新 API
                 </button>
                 
-                <!-- 新增 API 表单 -->
                 <div id="addApiForm" style="display:none;">
-                    <div class="form-group">
-                        <label>API 站子名字 (必填)</label>
-                        <input type="text" id="libName" placeholder="例如：DeepSeek官方">
-                    </div>
-                    <div class="form-group">
-                        <label>反代地址 (必填)</label>
-                        <input type="text" id="libUrl" placeholder="https://api...">
-                    </div>
-                    <div class="form-group">
-                        <label>密钥 (必填)</label>
-                        <input type="password" id="libKey" placeholder="sk-...">
-                    </div>
+                    <div class="form-group"><label>API 站子名字 (必填)</label><input type="text" id="libName" placeholder="例如：DeepSeek官方"></div>
+                    <div class="form-group"><label>反代地址 (必填)</label><input type="text" id="libUrl" placeholder="https://api..."></div>
+                    <div class="form-group"><label>密钥 (必填)</label><input type="password" id="libKey" placeholder="sk-..."></div>
+                    <div class="form-group"><label>想法备注</label><input type="text" id="libNote" placeholder="例如：接口稳定，速度快"></div>
                     <div style="display:flex; gap:12px;">
                         <div class="form-group" style="flex:1;">
                             <label>星级评分</label>
                             <select id="libStars">
-                                <option value="5">五星 ⭐⭐⭐⭐⭐</option>
-                                <option value="4">四星 ⭐⭐⭐⭐</option>
-                                <option value="3" selected>三星 ⭐⭐⭐</option>
-                                <option value="2">二星 ⭐⭐</option>
-                                <option value="1">一星 ⭐</option>
+                                <option value="5">五星</option><option value="4">四星</option><option value="3" selected>三星</option>
+                                <option value="2">二星</option><option value="1">一星</option>
                             </select>
                         </div>
                         <div class="form-group" style="flex:1;">
                             <label>价格水平</label>
                             <select id="libPrice">
-                                <option value="免费">免费</option>
-                                <option value="便宜">便宜</option>
-                                <option value="适中" selected>适中</option>
-                                <option value="昂贵">昂贵</option>
+                                <option value="免费">免费</option><option value="便宜">便宜</option><option value="适中" selected>适中</option><option value="昂贵">昂贵</option>
                             </select>
                         </div>
                     </div>
@@ -590,6 +467,28 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
         </div>
+
+        <!-- 导出模态框 -->
+        <div class="modal-overlay" id="exportModal">
+            <div class="modal-content">
+                <h3 class="modal-title">导出人设文档</h3>
+                <div class="form-group" style="margin:0;">
+                    <label>文件命名</label>
+                    <input type="text" id="exportFilename" placeholder="如: 男主设定">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label>格式选择</label>
+                    <select id="exportFormatModal">
+                        <option value="txt">.txt纯文本</option>
+                        <option value="doc">.doc文档</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeExportModal()">取消</button>
+                    <button class="btn-primary" onclick="confirmExport()">确认导出</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -597,39 +496,40 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker 注册成功'))
-                    .catch(err => console.log('Service Worker 注册失败', err));
+                    .then(reg => console.log('Service Worker OK'))
+                    .catch(err => console.log('Service Worker Fail', err));
             });
         }
 
-        // 本地数据缓存读取
+        const SYSTEM_PROMPT = '你是一个顶级的小说/游戏角色设定师。用户会和你交流人设大纲或灵感，你需要通过对话的形式，逐步帮用户扩写、润色人物设定的基本信息、外貌、性格、背景、特殊技能等。排版整洁。';
+
+        // 数据结构：多个人设会话
+        let chatSessions = JSON.parse(localStorage.getItem('chatSessions')) || [];
+        let currentSessionId = null;
+
         let savedApis = JSON.parse(localStorage.getItem('savedApis')) || [];
-        let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [
-            { role: 'system', content: '你是一个顶级的小说/游戏角色设定师。用户会和你交流人设大纲或灵感，你需要通过对话的形式，逐步帮用户扩写、润色人物设定的基本信息、外貌、性格、背景、特殊技能等。排版整洁。' }
-        ];
-        
         let currentApiUrl = localStorage.getItem('currentApiUrl') || '';
         let currentApiKey = localStorage.getItem('currentApiKey') || '';
         let currentModel = localStorage.getItem('currentModel') || '';
         let availableModels = JSON.parse(localStorage.getItem('availableModels')) || [];
-        // 追踪当前配置关联的库中ID（用于保存预设时进行覆盖更新）
         let activePresetId = localStorage.getItem('activePresetId') || '';
 
-        // 初始化
         window.onload = () => {
             document.getElementById('activeUrl').value = currentApiUrl;
             document.getElementById('activeKey').value = currentApiKey;
-            renderModelSelect();
-            renderChat();
+            if(availableModels.length > 0) {
+                renderModelSelect();
+            } else {
+                document.getElementById('manualModel').value = currentModel;
+            }
+            renderSessionList();
             renderLibrary();
         };
 
-        // Tab Dock 切换逻辑
         function switchTab(tab) {
             document.getElementById('tab-chat').classList.remove('active');
             document.getElementById('tab-settings').classList.remove('active');
             document.getElementById('tab-library').classList.remove('active');
-            
             document.getElementById('chatView').style.display = 'none';
             document.getElementById('settingsView').style.display = 'none';
             document.getElementById('libraryView').style.display = 'none';
@@ -637,11 +537,13 @@
             if (tab === 'chat') {
                 document.getElementById('tab-chat').classList.add('active');
                 document.getElementById('chatView').style.display = 'flex';
-                scrollToBottom();
+                // 退回到列表视角
+                closeChatRoom(); 
+                renderSessionList();
             } else if (tab === 'settings') {
                 document.getElementById('tab-settings').classList.add('active');
                 document.getElementById('settingsView').style.display = 'flex';
-                backToSettingsMain(); // 每次进设置先回退到主菜单
+                backToSettingsMain();
             } else {
                 document.getElementById('tab-library').classList.add('active');
                 document.getElementById('libraryView').style.display = 'flex';
@@ -649,7 +551,7 @@
             }
         }
 
-        /* ======= 设置子系统导航 ======= */
+        /* ======= 设置子系统 ======= */
         function openSettingsSubView(viewId) {
             document.getElementById('settingsMainMenu').style.display = 'none';
             document.getElementById('apiConfigSubView').style.display = 'none';
@@ -662,15 +564,77 @@
             document.getElementById('settingsMainMenu').style.display = 'block';
         }
 
-        /* ======= 聊天室对话 ======= */
+        /* ======= 聊天列表与房间管理 ======= */
+        function renderSessionList() {
+            const list = document.getElementById('sessionList');
+            list.innerHTML = '';
+            if(chatSessions.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:14px;">空空如也，点击上方新建人设吧。</div>';
+                return;
+            }
+            chatSessions.forEach(session => {
+                const visibleMsgCount = session.messages.filter(m => m.role !== 'system').length;
+                const div = document.createElement('div');
+                div.className = 'session-item';
+                div.innerHTML = `
+                    <div class="session-title" onclick="openSession('${session.id}')">${session.title}</div>
+                    <div class="session-count" onclick="openSession('${session.id}')">${visibleMsgCount} 条对话</div>
+                    <button class="session-delete" onclick="deleteSession('${session.id}')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function createNewSession() {
+            let title = prompt("请输入这个人设的名字或标题：", "未命名人设");
+            if(title === null) return;
+            if(!title.trim()) title = "未命名人设";
+            
+            const newSession = {
+                id: Date.now().toString(),
+                title: title.trim(),
+                messages: [{ role: 'system', content: SYSTEM_PROMPT }]
+            };
+            chatSessions.unshift(newSession);
+            localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+            openSession(newSession.id);
+        }
+
+        function openSession(id) {
+            currentSessionId = id;
+            document.getElementById('sessionListView').style.display = 'none';
+            document.getElementById('chatRoomView').style.display = 'flex';
+            
+            const session = chatSessions.find(s => s.id === id);
+            document.getElementById('chatRoomTitle').innerText = session.title;
+            renderChat();
+        }
+
+        function closeChatRoom() {
+            currentSessionId = null;
+            document.getElementById('chatRoomView').style.display = 'none';
+            document.getElementById('sessionListView').style.display = 'block';
+            renderSessionList();
+        }
+
+        function deleteSession(id) {
+            if(!confirm('确定要删除这个设定聊天吗？')) return;
+            chatSessions = chatSessions.filter(s => s.id !== id);
+            localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+            renderSessionList();
+        }
+
         function renderChat() {
             const chatBox = document.getElementById('chatBox');
             chatBox.innerHTML = '';
-            
-            const visibleMsgs = chatHistory.filter(m => m.role !== 'system');
-            
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            if(!session) return;
+
+            const visibleMsgs = session.messages.filter(m => m.role !== 'system');
             if(visibleMsgs.length === 0) {
-                chatBox.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:14px;">随时输入大纲或灵感，和我一起创造人设吧！</div>';
+                chatBox.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:14px;">输入大纲开始生成吧！</div>';
                 return;
             }
 
@@ -680,69 +644,122 @@
                 div.innerHTML = msg.content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
                 chatBox.appendChild(div);
             });
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            const chatBox = document.getElementById('chatBox');
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
         }
 
-        async function sendMessage() {
+        /* ======= 发送与生成 ======= */
+        function sendMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if (!text) return;
-
-            if (!currentApiUrl || !currentApiKey || !currentModel) {
-                return alert('请先在【设置】中填写 API 配置并拉取选择模型！');
-            }
-
-            chatHistory.push({ role: 'user', content: text });
-            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            session.messages.push({ role: 'user', content: text });
+            localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+            
             input.value = '';
             input.style.height = '';
             renderChat();
+        }
 
-            const sendBtn = document.getElementById('sendBtn');
-            sendBtn.disabled = true;
+        async function generateReply() {
+            if (!currentApiUrl || !currentApiKey || !currentModel) {
+                return alert('请先在【设置】中填写 API 配置并拉取/填写模型！');
+            }
+
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            // 如果最后一条不是 user，说明还没发话
+            if(session.messages[session.messages.length-1].role !== 'user') {
+                return alert('请先发送你想说的大纲或要求，然后再点击生成。');
+            }
+
+            const genBtn = document.getElementById('generateBtn');
+            genBtn.disabled = true;
+            genBtn.style.opacity = '0.5';
 
             try {
-                const response = await fetch(`${currentApiUrl}/chat/completions`, {
+                const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-                    body: JSON.stringify({ model: currentModel, messages: chatHistory })
+                    body: JSON.stringify({ model: currentModel, messages: session.messages })
                 });
                 const data = await response.json();
                 if (data.error) throw new Error(data.error.message);
                 
-                chatHistory.push({ role: 'assistant', content: data.choices[0].message.content });
-                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                session.messages.push({ role: 'assistant', content: data.choices[0].message.content });
+                localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderChat();
             } catch (error) {
-                alert('发送失败，请检查网络或 API 配置。\n错误: ' + error.message);
-                chatHistory.pop();
-                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-                renderChat();
-                input.value = text; 
+                alert('生成失败，请检查网络或 API 配置。\n错误: ' + error.message);
             } finally {
-                sendBtn.disabled = false;
+                genBtn.disabled = false;
+                genBtn.style.opacity = '1';
             }
         }
 
-        function clearChat() {
-            if(!confirm('确定要清空当前的全部对话记录吗？')) return;
-            chatHistory = [ chatHistory[0] ];
-            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-            renderChat();
+        /* ======= 悬浮菜单与导出 ======= */
+        function togglePlusMenu() {
+            const menu = document.getElementById('plusMenu');
+            menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+        }
+        
+        // 点击其他地方关闭悬浮菜单
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('plusMenu');
+            const btn = e.target.closest('.action-circle-btn');
+            if(menu && menu.style.display === 'flex' && !btn && !e.target.closest('.plus-menu')) {
+                menu.style.display = 'none';
+            }
+        });
+
+        function openExportModal() {
+            document.getElementById('plusMenu').style.display = 'none';
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            document.getElementById('exportFilename').value = session.title;
+            document.getElementById('exportModal').style.display = 'flex';
+        }
+        function closeExportModal() {
+            document.getElementById('exportModal').style.display = 'none';
         }
 
-        /* ======= API 配置与预设更新逻辑 ======= */
+        function confirmExport() {
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            const visibleMsgs = session.messages.filter(m => m.role !== 'system');
+            if (visibleMsgs.length === 0) return alert('没有记录可导出。');
+            let content = '';
+            visibleMsgs.forEach(msg => {
+                const roleName = msg.role === 'user' ? '【我】' : '【AI 设定师】';
+                content += `${roleName}：\n${msg.content}\n\n`;
+            });
+            
+            let filename = document.getElementById('exportFilename').value.trim() || session.title;
+            const format = document.getElementById('exportFormatModal').value;
+
+            if (format === 'txt') {
+                downloadDataFile(content, `${filename}.txt`, 'text/plain;charset=utf-8');
+            } else if (format === 'doc') {
+                const formattedContent = content.replace(/\n/g, '<br>');
+                const htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${filename}</title></head><body style="font-family: 'Microsoft YaHei', sans-serif; line-height: 1.6;">${formattedContent}</body></html>`;
+                downloadDataFile(htmlContent, `${filename}.doc`, 'application/msword;charset=utf-8');
+            }
+            closeExportModal();
+        }
+
+        /* ======= API 配置机制（增加兜底） ======= */
         function updateActiveConfig() {
             currentApiUrl = document.getElementById('activeUrl').value.trim();
             currentApiKey = document.getElementById('activeKey').value.trim();
-            currentModel = document.getElementById('activeModel').value;
+            // 如果下拉框显示着，以它为准
+            if(document.getElementById('autoModelGroup').style.display !== 'none') {
+                currentModel = document.getElementById('activeModel').value;
+            }
             localStorage.setItem('currentApiUrl', currentApiUrl);
             localStorage.setItem('currentApiKey', currentApiKey);
+            localStorage.setItem('currentModel', currentModel);
+        }
+        
+        function updateManualModel() {
+            currentModel = document.getElementById('manualModel').value.trim();
             localStorage.setItem('currentModel', currentModel);
         }
 
@@ -752,8 +769,9 @@
             btn.innerHTML = '拉取中...';
             btn.disabled = true;
 
+            const safeUrl = currentApiUrl.replace(/\/+$/, '');
             try {
-                const response = await fetch(`${currentApiUrl}/models`, {
+                const response = await fetch(`${safeUrl}/models`, {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${currentApiKey}` }
                 });
@@ -763,13 +781,19 @@
                 if (data.data && Array.isArray(data.data)) {
                     availableModels = data.data.map(m => m.id);
                     localStorage.setItem('availableModels', JSON.stringify(availableModels));
+                    document.getElementById('autoModelGroup').style.display = 'block';
+                    document.getElementById('manualModelGroup').style.display = 'none';
                     renderModelSelect();
                     alert('拉取成功！请在下方选择模型。');
                 } else {
                     throw new Error('API 返回的数据格式无法识别');
                 }
             } catch (error) {
-                alert('拉取失败，请检查反代地址或密钥。\n错误: ' + error.message);
+                // 【核心改进】如果拉取失败，弹出手动填写框
+                document.getElementById('autoModelGroup').style.display = 'none';
+                document.getElementById('manualModelGroup').style.display = 'block';
+                document.getElementById('manualModel').value = currentModel;
+                alert('自动拉取被拒绝（可能存在跨域或接口限制）。\n\n请直接在下方手动填写模型名称 (如 gpt-3.5-turbo)。');
             } finally {
                 btn.innerHTML = '<svg class="flex-center" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 拉取模型';
                 btn.disabled = false;
@@ -786,16 +810,16 @@
                 if (m === currentModel) opt.selected = true;
                 select.appendChild(opt);
             });
+            document.getElementById('autoModelGroup').style.display = 'block';
+            document.getElementById('manualModelGroup').style.display = 'none';
         }
 
         function saveActiveAsPreset() {
             const note = document.getElementById('activeNote').value.trim();
             const url = document.getElementById('activeUrl').value.trim();
             const key = document.getElementById('activeKey').value.trim();
-            
             if (!url || !key) return alert('反代地址和密钥不能为空！');
             
-            // 若之前从库中应用了预设，则执行覆盖更新
             if (activePresetId) {
                 const index = savedApis.findIndex(a => a.id === activePresetId);
                 if (index > -1) {
@@ -809,16 +833,8 @@
                 }
             }
             
-            // 否则录入一个全新的基础节点
             const newId = Date.now().toString();
-            savedApis.push({ 
-                id: newId, 
-                name: note || '备用未命名', 
-                note: note, 
-                url, key, 
-                stars: '3', 
-                price: '免费' 
-            });
+            savedApis.push({ id: newId, name: note || '备用未命名', note: note, url, key, stars: '3', price: '免费' });
             localStorage.setItem('savedApis', JSON.stringify(savedApis));
             activePresetId = newId;
             localStorage.setItem('activePresetId', activePresetId);
@@ -826,7 +842,7 @@
             alert('已保存为新预设！可在预设库中查看。');
         }
 
-        /* ======= 数据储存统计与导入/导出 ======= */
+        /* ======= 数据储存统计 ======= */
         function getStringBytes(str) { return new Blob([str || '']).size; }
         function formatBytes(bytes) {
             if (bytes === 0) return '0 B';
@@ -836,7 +852,7 @@
         }
 
         function updateStorageStats() {
-            const sizePersona = getStringBytes(localStorage.getItem('chatHistory') || '[]');
+            const sizePersona = getStringBytes(localStorage.getItem('chatSessions') || '[]');
             const sizeLib = getStringBytes(localStorage.getItem('savedApis') || '[]');
             const sizeApi = getStringBytes((localStorage.getItem('currentApiUrl')||'') + (localStorage.getItem('currentApiKey')||'') + (localStorage.getItem('currentModel')||'') + (localStorage.getItem('availableModels')||'[]'));
             const sizeTotal = sizePersona + sizeLib + sizeApi;
@@ -859,9 +875,8 @@
 
         function exportAllData() {
             const allData = {
-                chatHistory, savedApis, currentApiUrl, currentApiKey, currentModel,
-                availableModels: JSON.parse(localStorage.getItem('availableModels') || '[]'),
-                activePresetId
+                chatSessions, savedApis, currentApiUrl, currentApiKey, currentModel, activePresetId,
+                availableModels: JSON.parse(localStorage.getItem('availableModels') || '[]')
             };
             downloadDataFile(JSON.stringify(allData, null, 2), 'PersonaApp_AllData.json', 'application/json');
         }
@@ -873,7 +888,7 @@
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (data.chatHistory) localStorage.setItem('chatHistory', JSON.stringify(data.chatHistory));
+                    if (data.chatSessions) localStorage.setItem('chatSessions', JSON.stringify(data.chatSessions));
                     if (data.savedApis) localStorage.setItem('savedApis', JSON.stringify(data.savedApis));
                     if (data.currentApiUrl !== undefined) localStorage.setItem('currentApiUrl', data.currentApiUrl);
                     if (data.currentApiKey !== undefined) localStorage.setItem('currentApiKey', data.currentApiKey);
@@ -881,7 +896,7 @@
                     if (data.availableModels) localStorage.setItem('availableModels', JSON.stringify(data.availableModels));
                     if (data.activePresetId !== undefined) localStorage.setItem('activePresetId', data.activePresetId);
                     
-                    chatHistory = data.chatHistory || [];
+                    chatSessions = data.chatSessions || [];
                     savedApis = data.savedApis || [];
                     currentApiUrl = data.currentApiUrl || '';
                     currentApiKey = data.currentApiKey || '';
@@ -890,74 +905,58 @@
                     
                     document.getElementById('activeUrl').value = currentApiUrl;
                     document.getElementById('activeKey').value = currentApiKey;
-                    renderModelSelect();
-                    renderChat();
+                    renderSessionList();
                     renderLibrary();
                     updateStorageStats();
                     alert('全部数据导入成功！');
-                } catch(err) {
-                    alert('导入失败：文件损坏或格式错误。');
-                }
+                } catch(err) { alert('导入失败：文件损坏或格式错误。'); }
                 event.target.value = '';
             };
             reader.readAsText(file);
         }
 
-        /* ======= API预设库：显示、星星、复制功能 ======= */
+        /* ======= API预设库逻辑 ======= */
         function copyText(text) {
             if(!text) return;
             navigator.clipboard.writeText(text)
                 .then(() => alert('已成功复制到剪贴板'))
                 .catch(() => alert('复制失败，请手动选取复制'));
         }
-
         function toggleKey(id) {
             const input = document.getElementById(id);
-            if(input.type === 'password') input.type = 'text';
-            else input.type = 'password';
+            input.type = input.type === 'password' ? 'text' : 'password';
         }
-
         function toggleAddForm() {
             const form = document.getElementById('addApiForm');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
-            if (form.style.display === 'block') {
-                document.getElementById('libName').value = '';
-                document.getElementById('libUrl').value = '';
-                document.getElementById('libKey').value = '';
-            }
         }
-
         function saveLibraryApi() {
             const name = document.getElementById('libName').value.trim();
             const url = document.getElementById('libUrl').value.trim();
             const key = document.getElementById('libKey').value.trim();
+            const note = document.getElementById('libNote').value.trim(); // 恢复的备注
             const stars = document.getElementById('libStars').value;
             const price = document.getElementById('libPrice').value;
 
             if (!name || !url || !key) return alert('名字、地址和密钥为必填！');
-
-            savedApis.push({ id: Date.now().toString(), name, url, key, stars, price });
+            savedApis.push({ id: Date.now().toString(), name, note, url, key, stars, price });
             localStorage.setItem('savedApis', JSON.stringify(savedApis));
             document.getElementById('addApiForm').style.display = 'none';
             renderLibrary();
         }
-
         function applyLibraryApi(id) {
             const api = savedApis.find(a => a.id === id);
             if (!api) return;
-            
             activePresetId = api.id;
             localStorage.setItem('activePresetId', activePresetId);
             document.getElementById('activeUrl').value = api.url;
             document.getElementById('activeKey').value = api.key;
             document.getElementById('activeNote').value = api.note || '';
             updateActiveConfig();
-            
-            alert(`已应用：${api.name}，请前往“设置->API配置”面板拉取模型。`);
+            alert(`已应用：${api.name}，请前往“设置->API配置”面板检查模型。`);
             switchTab('settings');
             openSettingsSubView('apiConfigSubView');
         }
-
         function deleteLibraryApi(id) {
             if(!confirm('确定要删除该站子吗？')) return;
             savedApis = savedApis.filter(api => api.id !== id);
@@ -979,7 +978,6 @@
             list.innerHTML = '';
             
             const filtered = savedApis.filter(api => (api.name && api.name.toLowerCase().includes(query)));
-            
             filtered.forEach(api => {
                 const card = document.createElement('div');
                 card.className = 'api-card';
@@ -991,6 +989,7 @@
                             <span class="api-stars">${getStarsSvg(api.stars)}</span>
                         </div>
                     </div>
+                    <div class="api-note">${api.note || '无备注记录'}</div>
                     <div class="api-info-row">
                         <span class="api-info-label">地址</span>
                         <input type="text" value="${api.url}" readonly>
@@ -1016,27 +1015,7 @@
                 list.appendChild(card);
             });
         }
-
-        /* ======= 聊天文件导出 ======= */
-        function exportChat() {
-            const visibleMsgs = chatHistory.filter(m => m.role !== 'system');
-            if (visibleMsgs.length === 0) return alert('没有记录可导出。');
-            let content = '';
-            visibleMsgs.forEach(msg => {
-                const roleName = msg.role === 'user' ? '【我】' : '【AI 设定师】';
-                content += `${roleName}：\n${msg.content}\n\n`;
-            });
-            let filename = document.getElementById('filename').value.trim() || '人物设定对话记录';
-            const format = document.getElementById('exportFormat').value;
-
-            if (format === 'txt') {
-                downloadDataFile(content, `${filename}.txt`, 'text/plain;charset=utf-8');
-            } else if (format === 'doc') {
-                const formattedContent = content.replace(/\n/g, '<br>');
-                const htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${filename}</title></head><body style="font-family: 'Microsoft YaHei', sans-serif; line-height: 1.6;">${formattedContent}</body></html>`;
-                downloadDataFile(htmlContent, `${filename}.doc`, 'application/msword;charset=utf-8');
-            }
-        }
+        
         function downloadDataFile(content, filename, mimeType) {
             const blob = new Blob([content], { type: mimeType });
             const url = URL.createObjectURL(blob);
