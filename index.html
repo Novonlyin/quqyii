@@ -301,7 +301,13 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
                                 <span>导出</span>
                             </button>
+                            <!-- 新增：发送文件按钮 -->
+                            <button class="plus-menu-item" onclick="document.getElementById('docUpload').click()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                <span>发送文件</span>
+                            </button>
                         </div>
+                        <input type="file" id="docUpload" accept=".txt,.pdf,.docx" style="display:none;" onchange="handleFileUpload(event)">
 
                         <button class="action-circle-btn" onclick="togglePlusMenu()">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -366,10 +372,10 @@
                         <select id="activeModel" onchange="updateActiveConfig()"></select>
                     </div>
 
-                    <!-- 拉取失败时的兜底手动输入框 -->
+                    <!-- 隐藏的兜底输入框 (由于浏览器跨域导致失败时才显示) -->
                     <div class="form-group" id="manualModelGroup" style="display: none; margin-top: 15px;">
-                        <label style="color: #FF3B30;">拉取受限，请手动填写模型名称</label>
-                        <input type="text" id="manualModel" placeholder="例如: gpt-3.5-turbo" oninput="updateManualModel()">
+                        <label style="color: #FF3B30;">网页浏览器无法跨域拉取该站模型，请手动填写</label>
+                        <input type="text" id="manualModel" placeholder="例如: gpt-4o" oninput="updateManualModel()">
                     </div>
 
                     <div class="divider"></div>
@@ -776,24 +782,29 @@
                     headers: { 'Authorization': `Bearer ${currentApiKey}` }
                 });
                 const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
                 
-                if (data.data && Array.isArray(data.data)) {
-                    availableModels = data.data.map(m => m.id);
+                // 更强大的兼容解析机制（适配 OpenRouter 等各种中转 API 返回的奇葩格式）
+                let modelsArray = [];
+                if (data.data && Array.isArray(data.data)) modelsArray = data.data;
+                else if (data.models && Array.isArray(data.models)) modelsArray = data.models;
+                else if (Array.isArray(data)) modelsArray = data;
+                
+                if (modelsArray.length > 0) {
+                    availableModels = modelsArray.map(m => m.id || m.name || String(m));
                     localStorage.setItem('availableModels', JSON.stringify(availableModels));
                     document.getElementById('autoModelGroup').style.display = 'block';
                     document.getElementById('manualModelGroup').style.display = 'none';
                     renderModelSelect();
-                    alert('拉取成功！请在下方选择模型。');
+                    alert('模型列表拉取成功！已自动加载。');
                 } else {
-                    throw new Error('API 返回的数据格式无法识别');
+                    throw new Error(data.error?.message || '无法识别的数据格式');
                 }
             } catch (error) {
-                // 【核心改进】如果拉取失败，弹出手动填写框
+                // 如果是纯浏览器跨域(CORS)导致的失败，必须进行兜底
                 document.getElementById('autoModelGroup').style.display = 'none';
                 document.getElementById('manualModelGroup').style.display = 'block';
                 document.getElementById('manualModel').value = currentModel;
-                alert('自动拉取被拒绝（可能存在跨域或接口限制）。\n\n请直接在下方手动填写模型名称 (如 gpt-3.5-turbo)。');
+                alert('未能成功拉取模型列表！\n\n原因：您填写的 API 站长没有为服务器开放“浏览器跨域请求(CORS)”权限，导致请求被浏览器安全机制直接拦截。\n(注: 您在别的客户端或软件能拉取是因为它们没有浏览器的安全限制，绝对不是您的地址填错了！)\n\n解决办法：直接在下方弹出的框内【手动输入】模型名字 (例如 gpt-4o) 即可正常对话！');
             } finally {
                 btn.innerHTML = '<svg class="flex-center" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 拉取模型';
                 btn.disabled = false;
@@ -812,6 +823,74 @@
             });
             document.getElementById('autoModelGroup').style.display = 'block';
             document.getElementById('manualModelGroup').style.display = 'none';
+        }
+
+        /* ======= 文件上传与解析逻辑 (支持 txt/docx/pdf) ======= */
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                if (document.querySelector(`script[src="${src}"]`)) return resolve();
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('plusMenu').style.display = 'none';
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            let textContent = '';
+            const inputArea = document.getElementById('chatInput');
+            const originalPlaceholder = inputArea.placeholder;
+            inputArea.placeholder = '文件解析中，这可能需要几秒钟...';
+            inputArea.disabled = true;
+            
+            try {
+                if (ext === 'txt') {
+                    textContent = await file.text();
+                } else if (ext === 'docx') {
+                    // 动态加载 DOCX 解析库
+                    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js');
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+                    textContent = result.value;
+                } else if (ext === 'pdf') {
+                    // 动态加载 PDF 解析库
+                    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js');
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    let fullText = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContentObj = await page.getTextContent();
+                        const pageText = textContentObj.items.map(item => item.str).join(' ');
+                        fullText += pageText + '\n';
+                    }
+                    textContent = fullText;
+                } else {
+                    throw new Error('当前仅支持解析 txt, pdf, docx 格式文件');
+                }
+                
+                if (textContent.trim()) {
+                    // 填入输入框，让用户可以检查确认后再发送
+                    inputArea.value += `\n[以下是我发送的文件内容，请参考该内容完善人设：]\n${textContent.trim()}\n\n`;
+                    inputArea.style.height = 'auto';
+                    inputArea.style.height = Math.min(inputArea.scrollHeight, 220) + 'px';
+                } else {
+                    alert('文件内容为空或提取出来的文本无法识别。');
+                }
+            } catch (err) {
+                alert('文件解析失败: ' + err.message);
+            } finally {
+                inputArea.placeholder = originalPlaceholder;
+                inputArea.disabled = false;
+                event.target.value = ''; // 清空选中状态以便下次同名文件仍能触发
+            }
         }
 
         function saveActiveAsPreset() {
