@@ -261,6 +261,38 @@
         .action-btn { flex: 1; background: var(--input-bg); border: none; padding: 10px 0; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer; }
         .action-btn:active { background: #E5E5EA; }
         .action-danger { color: #FF3B30; }
+
+        /* 新增：配置预设区域与弹窗样式 */
+        .preset-selector {
+            background: var(--input-bg); border-radius: 12px; padding: 14px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 15px; font-weight: 600; cursor: pointer; color: var(--text-main); margin-bottom: 12px;
+        }
+        .preset-selector:active { background: #E5E5EA; }
+        
+        /* 新增：API储存库分类 Tab */
+        .lib-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .lib-tab {
+            background: var(--input-bg); border: none; padding: 8px 16px;
+            border-radius: 16px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer;
+        }
+        .lib-tab.active { background: var(--text-main); color: #FFF; }
+        
+        /* 新增：追评样式 */
+        .follow-up-box {
+            margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-color);
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .follow-up-item {
+            font-size: 13px; color: var(--text-main); background: #FAFAFA;
+            padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--text-muted);
+        }
+        .follow-up-date { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        
+        /* 新增：站点标签颜色 */
+        .badge-drama { background: #FFEBEA; color: #FF3B30; }
+        .badge-public { background: #E4F1E9; color: #34C759; }
+        .badge-paid { background: #EAF2FF; color: #007AFF; }
     </style>
 </head>
 <body>
@@ -313,13 +345,13 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                         
-                        <textarea id="chatInput" placeholder="输入大纲..." rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                        <textarea id="chatInput" placeholder="输入大纲... (回车发送)" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'" onkeydown="handleChatEnter(event)"></textarea>
                         
-                        <button class="action-circle-btn" onclick="sendMessage()" title="发送不上屏">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                        <button class="action-circle-btn" onclick="sendMessage()" title="发送文本/文件">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                         </button>
                         
-                        <button class="action-circle-btn primary" id="generateBtn" onclick="generateReply()" title="生成AI回复">
+                        <button class="action-circle-btn primary" id="generateBtn" onclick="generateReply()" title="请求AI生成">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                         </button>
                     </div>
@@ -380,18 +412,29 @@
 
                     <div class="divider"></div>
 
-                    <h2 class="panel-title">保存 / 更新 预设</h2>
-                    <div class="form-group">
-                        <label>预设备注 (选填)</label>
-                        <input type="text" id="activeNote" placeholder="例如：备用优质节点">
-                    </div>
-                    <button class="btn-secondary flex-center" onclick="saveActiveAsPreset()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> 保存更改至预设
-                    </button>
-                    
                     <div class="divider"></div>
                     <h2 class="panel-title">快捷配置预设</h2>
-                    <div class="api-list" id="configPresetList"></div>
+                    <div class="preset-selector" onclick="openPresetModal()">
+                        <span id="currentPresetName">点击选择预设...</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn-secondary flex-center" style="flex:1;" onclick="saveActiveAsNewPreset()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 存为新预设
+                        </button>
+                        <button class="btn-primary flex-center" style="flex:1;" onclick="updateCurrentPreset()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.29-10.45l5.08 5.08"></path></svg> 覆盖当前预设
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 配置预设列表专属弹窗 -->
+                <div class="modal-overlay" id="presetModal">
+                    <div class="modal-content">
+                        <h3 class="modal-title">我的配置预设</h3>
+                        <div class="api-list" id="presetModalList" style="max-height: 300px; overflow-y: auto;"></div>
+                        <button class="btn-secondary" onclick="closePresetModal()" style="margin-top: 12px;">关闭</button>
+                    </div>
                 </div>
 
                 <!-- 数据储存子页面 -->
@@ -431,7 +474,7 @@
             <div id="libraryView" class="view-panel">
                 <div class="search-bar">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" placeholder="搜索 API 站子名字..." oninput="renderLibrary()">
+                    <input type="text" id="searchInput" placeholder="搜索 API 站名..." oninput="renderLibrary()">
                 </div>
                 
                 <button class="btn-secondary flex-center" style="margin-bottom:16px;" onclick="toggleAddForm()">
@@ -439,10 +482,13 @@
                 </button>
                 
                 <div id="addApiForm" style="display:none;">
-                    <div class="form-group"><label>API 站子名字 (必填)</label><input type="text" id="libName" placeholder="例如：DeepSeek官方"></div>
+                    <div style="display:flex; gap:12px;">
+                        <div class="form-group" style="flex:1;"><label>API 站子名字 (必填)</label><input type="text" id="libName" placeholder="例如：某某中转"></div>
+                        <div class="form-group" style="flex:1;"><label>站点属性</label><select id="libType"><option value="公益站">公益站</option><option value="付费站" selected>付费站</option></select></div>
+                    </div>
                     <div class="form-group"><label>反代地址 (必填)</label><input type="text" id="libUrl" placeholder="https://api..."></div>
                     <div class="form-group"><label>密钥 (必填)</label><input type="password" id="libKey" placeholder="sk-..."></div>
-                    <div class="form-group"><label>想法备注</label><input type="text" id="libNote" placeholder="例如：接口稳定，速度快"></div>
+                    <div class="form-group"><label>初代想法备注</label><input type="text" id="libNote" placeholder="例如：接口稳定，速度快"></div>
                     <div style="display:flex; gap:12px;">
                         <div class="form-group" style="flex:1;">
                             <label>星级评分</label>
@@ -457,10 +503,26 @@
                                 <option value="免费">免费</option><option value="便宜">便宜</option><option value="适中" selected>适中</option><option value="昂贵">昂贵</option>
                             </select>
                         </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>是否避雷</label>
+                            <select id="libDrama" onchange="toggleDramaInput()">
+                                <option value="无瓜" selected>无瓜</option><option value="有瓜">有瓜</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="dramaInputGroup" style="display:none;">
+                        <label style="color:#FF3B30;">请简述是什么瓜</label>
+                        <input type="text" id="libDramaDetail" placeholder="例如：跑路、封号、虚标...">
                     </div>
                     <button class="btn-primary" onclick="saveLibraryApi()">确认添加入库</button>
                 </div>
                 
+                <div class="lib-tabs">
+                    <button class="lib-tab active" onclick="setLibFilter('全部')">全部</button>
+                    <button class="lib-tab" onclick="setLibFilter('付费站')">付费站</button>
+                    <button class="lib-tab" onclick="setLibFilter('公益站')">公益站</button>
+                </div>
+
                 <div class="api-list" id="apiList"></div>
             </div>
         </div>
@@ -533,9 +595,15 @@
             } else {
                 document.getElementById('manualModel').value = currentModel;
             }
+            
+            if(activePresetId) {
+                const pre = configPresets.find(p => p.id === activePresetId);
+                if(pre) document.getElementById('currentPresetName').innerText = pre.note || '未命名预设';
+            }
+
             renderSessionList();
             renderLibrary();
-            renderConfigPresets(); // 渲染专属预设
+            renderConfigPresets();
         };
 
         function switchTab(tab) {
@@ -886,10 +954,15 @@
                 }
                 
                 if (textContent.trim()) {
-                    // 填入输入框，让用户可以检查确认后再发送
-                    inputArea.value += `\n[以下是我发送的文件内容，请参考该内容完善人设：]\n${textContent.trim()}\n\n`;
-                    inputArea.style.height = 'auto';
-                    inputArea.style.height = Math.min(inputArea.scrollHeight, 220) + 'px';
+                    // 改进：直接将文档发送到聊天历史，由AI端阅读
+                    const session = chatSessions.find(s => s.id === currentSessionId);
+                    session.messages.push({
+                        role: 'user',
+                        content: `[发送了文件: ${file.name}]\n${textContent.trim()}`
+                    });
+                    localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+                    renderChat();
+                    alert('文档解析完毕，已直接发送到聊天记录中！您可以直接点击“生成”让AI阅读。');
                 } else {
                     alert('文件内容为空或提取出来的文本无法识别。');
                 }
@@ -898,40 +971,57 @@
             } finally {
                 inputArea.placeholder = originalPlaceholder;
                 inputArea.disabled = false;
-                event.target.value = ''; // 清空选中状态以便下次同名文件仍能触发
+                event.target.value = '';
             }
         }
 
-        function saveActiveAsPreset() {
-            const note = document.getElementById('activeNote').value.trim();
+        // 回车直接发送消息
+        function handleChatEnter(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function openPresetModal() {
+            renderConfigPresets();
+            document.getElementById('presetModal').style.display = 'flex';
+        }
+        function closePresetModal() {
+            document.getElementById('presetModal').style.display = 'none';
+        }
+
+        function saveActiveAsNewPreset() {
+            let note = prompt('请输入新预设的备注名字：');
+            if(!note || !note.trim()) return;
             const url = document.getElementById('activeUrl').value.trim();
             const key = document.getElementById('activeKey').value.trim();
             if (!url || !key) return alert('反代地址和密钥不能为空！');
             
-            // 如果是在现有的配置预设上更新
-            if (activePresetId) {
-                const index = configPresets.findIndex(a => a.id === activePresetId);
-                if (index > -1) {
-                    configPresets[index].url = url;
-                    configPresets[index].key = key;
-                    if (note) configPresets[index].note = note;
-                    localStorage.setItem('configPresets', JSON.stringify(configPresets));
-                    document.getElementById('activeNote').value = '';
-                    alert('配置更新成功！');
-                    renderConfigPresets();
-                    return;
-                }
-            }
-            
-            // 否则作为一条全新【快捷配置】存入（不污染API库）
             const newId = Date.now().toString();
-            configPresets.push({ id: newId, note: note || '未命名配置', url, key });
+            configPresets.push({ id: newId, note: note.trim(), url, key });
             localStorage.setItem('configPresets', JSON.stringify(configPresets));
+            
             activePresetId = newId;
             localStorage.setItem('activePresetId', activePresetId);
-            document.getElementById('activeNote').value = '';
-            alert('已保存为全新配置预设！');
-            renderConfigPresets();
+            document.getElementById('currentPresetName').innerText = note.trim();
+            alert('已保存为全新预设！');
+        }
+
+        function updateCurrentPreset() {
+            if(!activePresetId) return alert('当前没有选中预设。请先选择一个预设或保存为新预设。');
+            const url = document.getElementById('activeUrl').value.trim();
+            const key = document.getElementById('activeKey').value.trim();
+            if (!url || !key) return alert('反代地址和密钥不能为空！');
+            
+            const index = configPresets.findIndex(a => a.id === activePresetId);
+            if (index > -1) {
+                configPresets[index].url = url;
+                configPresets[index].key = key;
+                // 不覆盖同名备注
+                localStorage.setItem('configPresets', JSON.stringify(configPresets));
+                alert(`已成功覆盖更新预设 [${configPresets[index].note}] ！`);
+            }
         }
 
         function applyConfigPreset(id) {
@@ -939,23 +1029,27 @@
             if (!preset) return;
             activePresetId = preset.id;
             localStorage.setItem('activePresetId', activePresetId);
+            document.getElementById('currentPresetName').innerText = preset.note || '未命名';
             document.getElementById('activeUrl').value = preset.url;
             document.getElementById('activeKey').value = preset.key;
-            document.getElementById('activeNote').value = preset.note || '';
             updateActiveConfig();
-            alert(`已应用配置预设：${preset.note}\n请检查并拉取模型。`);
+            closePresetModal();
         }
 
         function deleteConfigPreset(id) {
             if(!confirm('确定要删除这条快捷配置吗？')) return;
             configPresets = configPresets.filter(p => p.id !== id);
             localStorage.setItem('configPresets', JSON.stringify(configPresets));
-            if (activePresetId === id) { activePresetId = ''; localStorage.removeItem('activePresetId'); }
+            if (activePresetId === id) { 
+                activePresetId = ''; 
+                localStorage.removeItem('activePresetId');
+                document.getElementById('currentPresetName').innerText = '点击选择预设...';
+            }
             renderConfigPresets();
         }
 
         function renderConfigPresets() {
-            const list = document.getElementById('configPresetList');
+            const list = document.getElementById('presetModalList');
             if(!list) return;
             list.innerHTML = '';
             if(configPresets.length === 0) {
@@ -967,18 +1061,13 @@
                 card.className = 'api-info-row';
                 card.style.justifyContent = 'space-between';
                 card.innerHTML = `
-                    <div style="flex:1; overflow:hidden;">
-                        <div style="font-weight:600; font-size:14px; color:var(--text-main); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${preset.note || '未命名'}</div>
-                        <div style="font-size:12px; color:var(--text-muted); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${preset.url}</div>
+                    <div style="flex:1; overflow:hidden; cursor:pointer;" onclick="applyConfigPreset('${preset.id}')">
+                        <div style="font-weight:600; font-size:14px; color:var(--text-main); white-space:nowrap; text-overflow:ellipsis;">${preset.note || '未命名'}</div>
+                        <div style="font-size:12px; color:var(--text-muted); white-space:nowrap; text-overflow:ellipsis;">${preset.url}</div>
                     </div>
-                    <div style="display:flex; gap:6px;">
-                        <button class="icon-btn" style="background:#E5E5EA; color:var(--text-main);" onclick="applyConfigPreset('${preset.id}')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        </button>
-                        <button class="icon-btn" style="background:#FFEBEA; color:#FF3B30;" onclick="deleteConfigPreset('${preset.id}')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
-                    </div>
+                    <button class="icon-btn" style="background:#FFEBEA; color:#FF3B30;" onclick="deleteConfigPreset('${preset.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
                 `;
                 list.appendChild(card);
             });
@@ -1062,6 +1151,22 @@
         }
 
         /* ======= API预设库逻辑 ======= */
+        let currentLibFilter = '全部';
+
+        function setLibFilter(filter) {
+            currentLibFilter = filter;
+            document.querySelectorAll('.lib-tab').forEach(btn => {
+                if (btn.innerText === filter) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            renderLibrary();
+        }
+
+        function toggleDramaInput() {
+            const val = document.getElementById('libDrama').value;
+            document.getElementById('dramaInputGroup').style.display = val === '有瓜' ? 'block' : 'none';
+        }
+
         function copyText(text) {
             if(!text) return;
             navigator.clipboard.writeText(text)
@@ -1076,42 +1181,63 @@
             const form = document.getElementById('addApiForm');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
         }
+
         function saveLibraryApi() {
             const name = document.getElementById('libName').value.trim();
+            const type = document.getElementById('libType').value;
             const url = document.getElementById('libUrl').value.trim();
             const key = document.getElementById('libKey').value.trim();
             const note = document.getElementById('libNote').value.trim();
             const stars = document.getElementById('libStars').value;
             const price = document.getElementById('libPrice').value;
+            const drama = document.getElementById('libDrama').value;
+            const dramaDetail = (document.getElementById('libDramaDetail')?.value || '').trim();
 
             if (!name || !url || !key) return alert('名字、地址和密钥为必填！');
-            savedApis.push({ id: Date.now().toString(), name, note, url, key, stars, price });
+            if (drama === '有瓜' && !dramaDetail) return alert('选择了有瓜，请简述是什么瓜。');
+
+            savedApis.push({ 
+                id: Date.now().toString(), 
+                name, type, note, url, key, stars, price, drama, dramaDetail,
+                followUps: [] // 初始化追评数组
+            });
             localStorage.setItem('savedApis', JSON.stringify(savedApis));
             document.getElementById('addApiForm').style.display = 'none';
             renderLibrary();
         }
+
+        function addFollowUp(id) {
+            const text = prompt('在此输入该站点的二次补充评价 (追评)：');
+            if(!text || !text.trim()) return;
+            const api = savedApis.find(a => a.id === id);
+            if(!api) return;
+            
+            if(!api.followUps) api.followUps = [];
+            const dateStr = new Date().toLocaleString('zh-CN', { hour12: false });
+            api.followUps.push({ date: dateStr, content: text.trim() });
+            
+            localStorage.setItem('savedApis', JSON.stringify(savedApis));
+            renderLibrary();
+        }
+
         function applyLibraryApi(id) {
             const api = savedApis.find(a => a.id === id);
             if (!api) return;
-            
-            // 重要：从储存库应用属于“脱机复制”，为了防止在配置页手滑更新破坏原来的库文件，
-            // 必须解绑配置预设 ID，使其处于全新空白状态
             activePresetId = '';
             localStorage.removeItem('activePresetId');
-            
+            document.getElementById('currentPresetName').innerText = '点击选择预设...';
             document.getElementById('activeUrl').value = api.url;
             document.getElementById('activeKey').value = api.key;
-            document.getElementById('activeNote').value = api.name || '';
             updateActiveConfig();
             alert(`已应用：${api.name}，请前往“设置->API配置”面板检查模型。`);
             switchTab('settings');
             openSettingsSubView('apiConfigSubView');
         }
+
         function deleteLibraryApi(id) {
-            if(!confirm('确定要删除该站子吗？')) return;
+            if(!confirm('确定要从储存库中删除该站子吗？')) return;
             savedApis = savedApis.filter(api => api.id !== id);
             localStorage.setItem('savedApis', JSON.stringify(savedApis));
-            if (activePresetId === id) { activePresetId = ''; localStorage.removeItem('activePresetId'); }
             renderLibrary();
         }
 
@@ -1127,19 +1253,45 @@
             const list = document.getElementById('apiList');
             list.innerHTML = '';
             
-            const filtered = savedApis.filter(api => (api.name && api.name.toLowerCase().includes(query)));
+            // 过滤：关键词 + 选项卡类型
+            let filtered = savedApis.filter(api => {
+                if (currentLibFilter !== '全部' && api.type !== currentLibFilter) return false;
+                if (query && !(api.name && api.name.toLowerCase().includes(query))) return false;
+                return true;
+            });
+            
             filtered.forEach(api => {
                 const card = document.createElement('div');
                 card.className = 'api-card';
+                
+                let dramaBadge = '';
+                if (api.drama === '有瓜') {
+                    dramaBadge = `<span class="api-badge badge-drama">避雷: ${api.dramaDetail}</span>`;
+                }
+                
+                let typeBadge = api.type === '公益站' 
+                    ? `<span class="api-badge badge-public">公益站</span>` 
+                    : `<span class="api-badge badge-paid">付费站 / ${api.price || '未知'}</span>`;
+
+                let followUpHtml = '';
+                if (api.followUps && api.followUps.length > 0) {
+                    followUpHtml = `<div class="follow-up-box">` + 
+                        api.followUps.map(f => `<div class="follow-up-item"><span class="follow-up-date">${f.date} 追评</span>${f.content}</div>`).join('') + 
+                    `</div>`;
+                }
+
                 card.innerHTML = `
                     <div class="api-card-header">
                         <h4>${api.name || '未命名站子'}</h4>
-                        <div class="api-badges">
-                            <span class="api-badge">${api.price || '未知'}</span>
-                            <span class="api-stars">${getStarsSvg(api.stars)}</span>
-                        </div>
+                        <div class="api-stars">${getStarsSvg(api.stars)}</div>
                     </div>
-                    <div class="api-note">${api.note || '无备注记录'}</div>
+                    <div class="api-badges" style="margin-bottom: 12px;">
+                        ${typeBadge}
+                        ${dramaBadge}
+                    </div>
+                    <div class="api-note">${api.note || '无初代备注记录'}</div>
+                    ${followUpHtml}
+                    <div style="margin-top:16px;"></div>
                     <div class="api-info-row">
                         <span class="api-info-label">地址</span>
                         <input type="text" value="${api.url}" readonly>
@@ -1158,6 +1310,7 @@
                         </button>
                     </div>
                     <div class="api-actions">
+                        <button class="action-btn flex-center" onclick="addFollowUp('${api.id}')">写追评</button>
                         <button class="action-btn flex-center" onclick="applyLibraryApi('${api.id}')">应用</button>
                         <button class="action-btn action-danger flex-center" onclick="deleteLibraryApi('${api.id}')">删除</button>
                     </div>
