@@ -4,13 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 人设生成器</title>
-    <!-- 引入安全认证检查 -->
-    <script>
-        if (localStorage.getItem('isLoggedIn') !== 'true') {
-            window.location.href = 'login.html';
-        }
-    </script>
-    <script src="auth.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FAFAFA">
     <link rel="apple-touch-icon" href="https://nos.netease.com/vcloud-statistic/nrtc/9de5d1c8-a976-434e-8195-5dbc2a586a0a.png">
@@ -383,13 +376,6 @@
                             </div>
                             <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>
-                        
-                        <button class="ios-menu-item" style="color: #FF3B30;" onclick="handleLogout()">
-                            <div class="menu-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                                退出登录
-                            </div>
-                        </button>
                     </div>
                 </div>
 
@@ -496,13 +482,18 @@
                 </button>
                 
                 <div id="addApiForm" style="display:none;">
+                    <input type="hidden" id="followUpLibId" value="">
                     <div style="display:flex; gap:12px;">
-                        <div class="form-group" style="flex:1;"><label>API 站子名字 (必填)</label><input type="text" id="libName" placeholder="例如：某某中转"></div>
+                        <div class="form-group" style="flex:1;"><label>API 站名 (必填)</label><input type="text" id="libName" placeholder="例如：某某中转"></div>
                         <div class="form-group" style="flex:1;"><label>站点属性</label><select id="libType"><option value="公益站">公益站</option><option value="付费站" selected>付费站</option></select></div>
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        <div class="form-group" style="flex:1;"><label>账号名字</label><input type="text" id="libAccount" placeholder="邮箱 / 手机号"></div>
+                        <div class="form-group" style="flex:1;"><label>账号密码</label><input type="password" id="libAccountPwd" placeholder="******"></div>
                     </div>
                     <div class="form-group"><label>反代地址 (必填)</label><input type="text" id="libUrl" placeholder="https://api..."></div>
                     <div class="form-group"><label>密钥 (必填)</label><input type="password" id="libKey" placeholder="sk-..."></div>
-                    <div class="form-group"><label>初代想法备注</label><input type="text" id="libNote" placeholder="例如：接口稳定，速度快"></div>
+                    <div class="form-group"><label>想法备注</label><input type="text" id="libNote" placeholder="例如：接口稳定，速度快"></div>
                     <div style="display:flex; gap:12px;">
                         <div class="form-group" style="flex:1;">
                             <label>星级评分</label>
@@ -528,7 +519,10 @@
                         <label style="color:#FF3B30;">请简述是什么瓜</label>
                         <input type="text" id="libDramaDetail" placeholder="例如：跑路、封号、虚标...">
                     </div>
-                    <button class="btn-primary" onclick="saveLibraryApi()">确认添加入库</button>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn-secondary" onclick="cancelAddForm()">取消</button>
+                        <button class="btn-primary" id="saveApiBtn" onclick="saveLibraryApi()">确认添加入库</button>
+                    </div>
                 </div>
                 
                 <div class="lib-tabs">
@@ -1194,11 +1188,61 @@
         function toggleAddForm() {
             const form = document.getElementById('addApiForm');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            if (form.style.display === 'block') {
+                document.getElementById('followUpLibId').value = '';
+                document.getElementById('saveApiBtn').innerText = '确认添加入库';
+                
+                document.getElementById('libName').value = '';
+                document.getElementById('libType').value = '付费站';
+                document.getElementById('libAccount').value = '';
+                document.getElementById('libAccountPwd').value = '';
+                document.getElementById('libUrl').value = '';
+                document.getElementById('libKey').value = '';
+                document.getElementById('libNote').value = '';
+                document.getElementById('libStars').value = '3';
+                document.getElementById('libPrice').value = '适中';
+                document.getElementById('libDrama').value = '无瓜';
+                document.getElementById('libDramaDetail').value = '';
+                toggleDramaInput();
+            }
+        }
+
+        function cancelAddForm() {
+            document.getElementById('addApiForm').style.display = 'none';
+        }
+
+        // 打开追评(二次修改)表单
+        function openFollowUpForm(id) {
+            const api = savedApis.find(a => a.id === id);
+            if(!api) return;
+            const form = document.getElementById('addApiForm');
+            form.style.display = 'block';
+            document.getElementById('followUpLibId').value = id;
+            document.getElementById('saveApiBtn').innerText = '确认追加记录';
+            
+            // 预填第一次的信息，方便用户二次修改补充
+            document.getElementById('libName').value = api.name || '';
+            document.getElementById('libType').value = api.type || '付费站';
+            document.getElementById('libAccount').value = api.account || '';
+            document.getElementById('libAccountPwd').value = api.accountPwd || '';
+            document.getElementById('libUrl').value = api.url || '';
+            document.getElementById('libKey').value = api.key || '';
+            document.getElementById('libNote').value = api.note || '';
+            document.getElementById('libStars').value = api.stars || '3';
+            document.getElementById('libPrice').value = api.price || '适中';
+            document.getElementById('libDrama').value = api.drama || '无瓜';
+            document.getElementById('libDramaDetail').value = api.dramaDetail || '';
+            toggleDramaInput();
+            
+            document.querySelector('.view-content').scrollTo({top: 0, behavior: 'smooth'});
         }
 
         function saveLibraryApi() {
+            const followUpId = document.getElementById('followUpLibId').value;
             const name = document.getElementById('libName').value.trim();
             const type = document.getElementById('libType').value;
+            const account = document.getElementById('libAccount').value.trim();
+            const accountPwd = document.getElementById('libAccountPwd').value.trim();
             const url = document.getElementById('libUrl').value.trim();
             const key = document.getElementById('libKey').value.trim();
             const note = document.getElementById('libNote').value.trim();
@@ -1210,27 +1254,32 @@
             if (!name || !url || !key) return alert('名字、地址和密钥为必填！');
             if (drama === '有瓜' && !dramaDetail) return alert('选择了有瓜，请简述是什么瓜。');
 
-            savedApis.push({ 
-                id: Date.now().toString(), 
-                name, type, note, url, key, stars, price, drama, dramaDetail,
-                followUps: [] // 初始化追评数组
-            });
-            localStorage.setItem('savedApis', JSON.stringify(savedApis));
-            document.getElementById('addApiForm').style.display = 'none';
-            renderLibrary();
-        }
+            const dateStr = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
 
-        function addFollowUp(id) {
-            const text = prompt('在此输入该站点的二次补充评价 (追评)：');
-            if(!text || !text.trim()) return;
-            const api = savedApis.find(a => a.id === id);
-            if(!api) return;
+            if (followUpId) {
+                // 追评逻辑: 将完整快照存入原数据的 followUps 数组
+                const api = savedApis.find(a => a.id === followUpId);
+                if (api) {
+                    if (!api.followUps) api.followUps = [];
+                    api.followUps.push({
+                        date: dateStr,
+                        name, type, account, accountPwd, url, key, note, stars, price, drama, dramaDetail
+                    });
+                    localStorage.setItem('savedApis', JSON.stringify(savedApis));
+                    alert('追评记录已成功追加！');
+                }
+            } else {
+                // 初次录入
+                savedApis.push({ 
+                    id: Date.now().toString(), 
+                    name, type, account, accountPwd, note, url, key, stars, price, drama, dramaDetail,
+                    followUps: []
+                });
+                localStorage.setItem('savedApis', JSON.stringify(savedApis));
+                alert('新 API 已成功入库！');
+            }
             
-            if(!api.followUps) api.followUps = [];
-            const dateStr = new Date().toLocaleString('zh-CN', { hour12: false });
-            api.followUps.push({ date: dateStr, content: text.trim() });
-            
-            localStorage.setItem('savedApis', JSON.stringify(savedApis));
+            document.getElementById('addApiForm').style.display = 'none';
             renderLibrary();
         }
 
@@ -1243,7 +1292,23 @@
             document.getElementById('activeUrl').value = api.url;
             document.getElementById('activeKey').value = api.key;
             updateActiveConfig();
-            alert(`已应用：${api.name}，请前往“设置->API配置”面板检查模型。`);
+            alert(`已应用初代配置：${api.name}，请前往“设置->API配置”面板检查模型。`);
+            switchTab('settings');
+            openSettingsSubView('apiConfigSubView');
+        }
+
+        // 应用追评里的配置
+        function applyFollowUpApi(apiId, fIdx) {
+            const api = savedApis.find(a => a.id === apiId);
+            if (!api || !api.followUps || !api.followUps[fIdx]) return;
+            const f = api.followUps[fIdx];
+            activePresetId = '';
+            localStorage.removeItem('activePresetId');
+            document.getElementById('currentPresetName').innerText = '点击选择预设...';
+            document.getElementById('activeUrl').value = f.url;
+            document.getElementById('activeKey').value = f.key;
+            updateActiveConfig();
+            alert(`已应用追评配置：${f.name}，请前往“设置->API配置”面板检查模型。`);
             switchTab('settings');
             openSettingsSubView('apiConfigSubView');
         }
@@ -1267,7 +1332,6 @@
             const list = document.getElementById('apiList');
             list.innerHTML = '';
             
-            // 过滤：关键词 + 选项卡类型
             let filtered = savedApis.filter(api => {
                 if (currentLibFilter !== '全部' && api.type !== currentLibFilter) return false;
                 if (query && !(api.name && api.name.toLowerCase().includes(query))) return false;
@@ -1278,22 +1342,56 @@
                 const card = document.createElement('div');
                 card.className = 'api-card';
                 
-                let dramaBadge = '';
-                if (api.drama === '有瓜') {
-                    dramaBadge = `<span class="api-badge badge-drama">避雷: ${api.dramaDetail}</span>`;
-                }
-                
-                let typeBadge = api.type === '公益站' 
-                    ? `<span class="api-badge badge-public">公益站</span>` 
-                    : `<span class="api-badge badge-paid">付费站 / ${api.price || '未知'}</span>`;
+                let dramaBadge = api.drama === '有瓜' ? `<span class="api-badge badge-drama">避雷: ${api.dramaDetail}</span>` : '';
+                let typeBadge = api.type === '公益站' ? `<span class="api-badge badge-public">公益站</span>` : `<span class="api-badge badge-paid">付费站 / ${api.price || '未知'}</span>`;
 
+                // 渲染淘宝式快照追评列表
                 let followUpHtml = '';
                 if (api.followUps && api.followUps.length > 0) {
                     followUpHtml = `<div class="follow-up-box">` + 
-                        api.followUps.map(f => `<div class="follow-up-item"><span class="follow-up-date">${f.date} 追评</span>${f.content}</div>`).join('') + 
+                        api.followUps.map((f, idx) => {
+                            let fDrama = f.drama === '有瓜' ? `<span class="api-badge badge-drama">避雷: ${f.dramaDetail}</span>` : '';
+                            let fType = f.type === '公益站' ? `<span class="api-badge badge-public">公益站</span>` : `<span class="api-badge badge-paid">付费站 / ${f.price || '未知'}</span>`;
+                            let uniq = api.id + '_' + idx;
+                            return `
+                            <div class="follow-up-item">
+                                <span class="follow-up-date">追评于: ${f.date} (北京时间)</span>
+                                <div class="api-card-header" style="margin-top:6px; margin-bottom:6px;">
+                                    <h4 style="font-size:14px;">${f.name || '未命名站子'}</h4>
+                                    <div class="api-stars">${getStarsSvg(f.stars)}</div>
+                                </div>
+                                <div class="api-badges" style="margin-bottom: 8px;">${fType} ${fDrama}</div>
+                                <div class="api-note">${f.note || '无备注记录'}</div>
+                                <div style="margin-top:12px;"></div>
+                                <div class="api-info-row" style="background:#EFEFF4;">
+                                    <span class="api-info-label">账号</span>
+                                    <input type="text" value="${f.account || ''}" readonly>
+                                    <button class="icon-btn" onclick="copyText('${f.account || ''}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                </div>
+                                <div class="api-info-row" style="background:#EFEFF4;">
+                                    <span class="api-info-label">密码</span>
+                                    <input type="password" id="pwd_f_${uniq}" value="${f.accountPwd || ''}" readonly>
+                                    <button class="icon-btn" onclick="toggleKey('pwd_f_${uniq}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+                                    <button class="icon-btn" onclick="copyText('${f.accountPwd || ''}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                </div>
+                                <div class="api-info-row" style="background:#EFEFF4;">
+                                    <span class="api-info-label">地址</span>
+                                    <input type="text" value="${f.url}" readonly>
+                                    <button class="icon-btn" onclick="copyText('${f.url}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                </div>
+                                <div class="api-info-row" style="background:#EFEFF4;">
+                                    <span class="api-info-label">密钥</span>
+                                    <input type="password" id="key_f_${uniq}" value="${f.key}" readonly>
+                                    <button class="icon-btn" onclick="toggleKey('key_f_${uniq}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+                                    <button class="icon-btn" onclick="copyText('${f.key}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                </div>
+                                <button class="action-btn flex-center" style="margin-top:8px;" onclick="applyFollowUpApi('${api.id}', ${idx})">应用此追评配置</button>
+                            </div>`;
+                        }).join('') + 
                     `</div>`;
                 }
 
+                // 渲染主卡片
                 card.innerHTML = `
                     <div class="api-card-header">
                         <h4>${api.name || '未命名站子'}</h4>
@@ -1306,6 +1404,25 @@
                     <div class="api-note">${api.note || '无初代备注记录'}</div>
                     ${followUpHtml}
                     <div style="margin-top:16px;"></div>
+                    
+                    <div class="api-info-row">
+                        <span class="api-info-label">账号</span>
+                        <input type="text" value="${api.account || ''}" readonly>
+                        <button class="icon-btn" onclick="copyText('${api.account || ''}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    </div>
+                    <div class="api-info-row">
+                        <span class="api-info-label">密码</span>
+                        <input type="password" id="pwd_${api.id}" value="${api.accountPwd || ''}" readonly>
+                        <button class="icon-btn" onclick="toggleKey('pwd_${api.id}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                        <button class="icon-btn" onclick="copyText('${api.accountPwd || ''}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    </div>
+                    
                     <div class="api-info-row">
                         <span class="api-info-label">地址</span>
                         <input type="text" value="${api.url}" readonly>
@@ -1324,8 +1441,8 @@
                         </button>
                     </div>
                     <div class="api-actions">
-                        <button class="action-btn flex-center" onclick="addFollowUp('${api.id}')">写追评</button>
-                        <button class="action-btn flex-center" onclick="applyLibraryApi('${api.id}')">应用</button>
+                        <button class="action-btn flex-center" onclick="openFollowUpForm('${api.id}')">写追评</button>
+                        <button class="action-btn flex-center" onclick="applyLibraryApi('${api.id}')">应用初代</button>
                         <button class="action-btn action-danger flex-center" onclick="deleteLibraryApi('${api.id}')">删除</button>
                     </div>
                 `;
