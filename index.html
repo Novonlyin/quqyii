@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI 人设生成器</title>
+    <!-- 引入安全认证检查 -->
+    <script>
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="auth.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FAFAFA">
     <link rel="apple-touch-icon" href="https://nos.netease.com/vcloud-statistic/nrtc/9de5d1c8-a976-434e-8195-5dbc2a586a0a.png">
@@ -375,6 +382,13 @@
                                 数据储存
                             </div>
                             <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                        
+                        <button class="ios-menu-item" style="color: #FF3B30;" onclick="handleLogout()">
+                            <div class="menu-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                退出登录
+                            </div>
                         </button>
                     </div>
                 </div>
