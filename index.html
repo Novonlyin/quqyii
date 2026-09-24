@@ -184,25 +184,18 @@
         .action-circle-btn.primary:active { opacity: 0.8; }
         .action-circle-btn svg { width: 20px; height: 20px; stroke-width: 2.2; }
 
-        /* 悬浮菜单 (导出) */
-        .plus-menu {
-            position: absolute; bottom: 65px; left: 16px; background: #FFFFFF;
-            border: 1px solid var(--border-color); border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08); overflow: hidden;
-            display: flex; flex-direction: column; width: 120px; z-index: 30;
-            transform-origin: bottom left; animation: popIn 0.2s ease-out;
-        }
+        /* 悬浮菜单 & FAB按钮 */
+        .fab-container { position: absolute; bottom: 20px; right: 20px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+        .fab-menu { background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; width: 140px; transform-origin: bottom right; animation: popIn 0.2s ease-out; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .plus-menu-item {
-            background: transparent; border: none; padding: 14px 16px;
-            display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500;
-            color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color);
-        }
-        .plus-menu-item:last-child { border-bottom: none; }
-        .plus-menu-item:active { background: var(--input-bg); }
-        .plus-menu-item svg { width: 18px; height: 18px; }
+        .fab-menu-item { background: transparent; border: none; padding: 14px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color); }
+        .fab-menu-item:last-child { border-bottom: none; }
+        .fab-menu-item:active { background: var(--input-bg); }
+        .fab-btn { background: var(--btn-bg); color: #FFF; border: none; border-radius: 50%; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.2s; }
+        .fab-btn:active { transform: scale(0.95); }
+        .fab-btn svg { width: 24px; height: 24px; stroke-width: 2.5; }
 
-        /* 模态框 (导出弹窗) */
+        /* 模态框 (通用) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
@@ -214,6 +207,9 @@
         }
         .modal-title { font-size: 18px; font-weight: 700; text-align: center; margin: 0; }
         .modal-actions { display: flex; gap: 12px; margin-top: 8px; }
+
+        /* 文档编辑器专属 */
+        .doc-editor-textarea { flex: 1; width: 100%; box-sizing: border-box; background: #FAFAFA; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; font-size: 15px; font-family: inherit; resize: none; outline: none; color: var(--text-main); line-height: 1.6; margin-bottom: 16px; }
 
         /* ----- 表单与按钮通用 ----- */
         .form-group { margin-bottom: 16px; }
@@ -353,22 +349,10 @@
                     <div class="chat-box" id="chatBox"></div>
                     
                     <div class="chat-input-area">
-                        <!-- 加号展开悬浮菜单 -->
-                        <div class="plus-menu" id="plusMenu" style="display: none;">
-                            <button class="plus-menu-item" onclick="openExportModal()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
-                                <span>导出</span>
-                            </button>
-                            <!-- 新增：发送文件按钮 -->
-                            <button class="plus-menu-item" onclick="document.getElementById('docUpload').click()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                <span>发送文件</span>
-                            </button>
-                        </div>
                         <input type="file" id="docUpload" accept=".txt,.pdf,.docx" style="display:none;" onchange="handleFileUpload(event)">
 
-                        <button class="action-circle-btn" onclick="togglePlusMenu()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <button class="action-circle-btn" onclick="document.getElementById('docUpload').click()" title="发送文件解析">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         </button>
                         
                         <textarea id="chatInput" placeholder="输入大纲... (回车发送)" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'" onkeydown="handleChatEnter(event)"></textarea>
@@ -602,9 +586,63 @@
 
                 <div class="api-list" id="apiList"></div>
             </div>
+
+            <!-- 视图四：文本编辑器 (Docx 库) -->
+            <div id="docsView" class="view-panel" style="padding: 0;">
+                
+                <!-- 文档列表库 -->
+                <div id="docsListView" style="padding: 20px 16px; display: block; height: 100%; box-sizing: border-box; position: relative;">
+                    <h2 class="panel-title">文档与导出库</h2>
+                    <div class="search-bar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="docSearchInput" placeholder="搜索文档标题..." oninput="renderDocsList()">
+                    </div>
+                    
+                    <div class="lib-tabs" id="docTabsContainer">
+                        <!-- 动态渲染分类 -->
+                    </div>
+
+                    <div class="api-list" id="docsListContainer"></div>
+
+                    <!-- 悬浮+号按钮 -->
+                    <div class="fab-container">
+                        <div class="fab-menu" id="docFabMenu" style="display: none;">
+                            <button class="fab-menu-item" onclick="document.getElementById('docRealUpload').click()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg> 从本地导入
+                            </button>
+                            <button class="fab-menu-item" onclick="createNewDoc()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> 新建纯文本
+                            </button>
+                        </div>
+                        <button class="fab-btn" onclick="toggleDocFab()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                        <input type="file" id="docRealUpload" accept=".txt,.pdf,.docx" style="display:none;" onchange="importDocFile(event)">
+                    </div>
+                </div>
+
+                <!-- 文档编辑室 -->
+                <div id="docEditorRoom" style="display: none; flex-direction: column; height: 100%; padding: 20px 16px;">
+                    <div class="chat-header" style="padding: 0 0 16px 0; border: none; background: transparent;">
+                        <button class="back-nav-btn" onclick="closeDocEditor()">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 返回库
+                        </button>
+                        <button class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 14px;" onclick="openDocExportModal()">导出文档</button>
+                    </div>
+                    
+                    <input type="hidden" id="editingDocId">
+                    <div style="display:flex; gap:12px;">
+                        <div class="form-group" style="flex:2;"><label>文档标题</label><input type="text" id="docEditTitle" placeholder="如: 男主设定终版"></div>
+                        <div class="form-group" style="flex:1;"><label>分类标签</label><input type="text" id="docEditCategory" placeholder="如: 赛博朋克"></div>
+                    </div>
+                    
+                    <textarea id="docEditContent" class="doc-editor-textarea" placeholder="在这里自由编辑文本..."></textarea>
+                    <button class="btn-secondary" onclick="saveDocProgress()">保存进度</button>
+                </div>
+            </div>
         </div>
 
-        <!-- 底栏 Dock 导航 (移除了文字，只留纯净SVG) -->
+        <!-- 底栏 Dock 导航 -->
         <div class="bottom-dock">
             <button id="tab-chat" class="dock-btn active" onclick="switchTab('chat')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> 
@@ -615,26 +653,30 @@
             <button id="tab-library" class="dock-btn" onclick="switchTab('library')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
+            <button id="tab-docs" class="dock-btn" onclick="switchTab('docs')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </button>
         </div>
 
-        <!-- 导出模态框 -->
-        <div class="modal-overlay" id="exportModal">
+        <!-- 导出文档模态框 -->
+        <div class="modal-overlay" id="docExportModal">
             <div class="modal-content">
-                <h3 class="modal-title">导出人设文档</h3>
+                <h3 class="modal-title">导出文档</h3>
                 <div class="form-group" style="margin:0;">
-                    <label>文件命名</label>
-                    <input type="text" id="exportFilename" placeholder="如: 男主设定">
+                    <label>确认文件命名</label>
+                    <input type="text" id="finalExportName" placeholder="如: 男主设定">
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label>格式选择</label>
-                    <select id="exportFormatModal">
-                        <option value="txt">.txt纯文本</option>
-                        <option value="doc">.doc文档</option>
+                    <select id="finalExportFormat">
+                        <option value="docx">.docx / .doc (Word文档)</option>
+                        <option value="txt">.txt (纯文本)</option>
+                        <option value="pdf">.pdf (调用打印另存为)</option>
                     </select>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn-secondary" onclick="closeExportModal()">取消</button>
-                    <button class="btn-primary" onclick="confirmExport()">确认导出</button>
+                    <button class="btn-secondary" onclick="closeDocExportModal()">取消</button>
+                    <button class="btn-primary" onclick="confirmDocExport()">确认导出</button>
                 </div>
             </div>
         </div>
@@ -778,6 +820,10 @@ relationship_with_user:
         let availableModels = JSON.parse(localStorage.getItem('availableModels')) || [];
         let activePresetId = localStorage.getItem('activePresetId') || '';
 
+        // 新增：Doc系统数据
+        let savedDocs = JSON.parse(localStorage.getItem('savedDocs')) || [];
+        let currentDocFilter = '全部';
+
         window.onload = () => {
             document.getElementById('activeUrl').value = currentApiUrl;
             document.getElementById('activeKey').value = currentApiKey;
@@ -795,15 +841,19 @@ relationship_with_user:
             renderSessionList();
             renderLibrary();
             renderConfigPresets();
+            renderDocsList();
         };
 
         function switchTab(tab) {
             document.getElementById('tab-chat').classList.remove('active');
             document.getElementById('tab-settings').classList.remove('active');
             document.getElementById('tab-library').classList.remove('active');
+            document.getElementById('tab-docs').classList.remove('active');
+            
             document.getElementById('chatView').style.display = 'none';
             document.getElementById('settingsView').style.display = 'none';
             document.getElementById('libraryView').style.display = 'none';
+            document.getElementById('docsView').style.display = 'none';
             document.querySelector('.bottom-dock').style.display = 'flex'; 
 
             if (tab === 'chat') {
@@ -815,10 +865,15 @@ relationship_with_user:
                 document.getElementById('tab-settings').classList.add('active');
                 document.getElementById('settingsView').style.display = 'flex';
                 backToSettingsMain();
-            } else {
+            } else if (tab === 'library') {
                 document.getElementById('tab-library').classList.add('active');
                 document.getElementById('libraryView').style.display = 'flex';
                 renderLibrary();
+            } else if (tab === 'docs') {
+                document.getElementById('tab-docs').classList.add('active');
+                document.getElementById('docsView').style.display = 'flex';
+                closeDocEditor();
+                renderDocsList();
             }
         }
 
@@ -854,7 +909,6 @@ relationship_with_user:
                     <button class="action-btn flex-center" onclick="applyTemplate('default')">
                         ${activeTemplateId === 'default' ? '已应用当前' : '应用模板'}
                     </button>
-                    <button class="action-btn flex-center" onclick="openTemplateEditor('default')">查看</button>
                 </div>
             `;
             list.appendChild(defaultCard);
@@ -1194,52 +1248,198 @@ relationship_with_user:
             }
         }
 
-        /* ======= 悬浮菜单与导出 ======= */
-        function togglePlusMenu() {
-            const menu = document.getElementById('plusMenu');
+        /* ======= 文档与导出库逻辑 ======= */
+        function toggleDocFab() {
+            const menu = document.getElementById('docFabMenu');
             menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
         }
-        
-        // 点击其他地方关闭悬浮菜单
         document.addEventListener('click', (e) => {
-            const menu = document.getElementById('plusMenu');
-            const btn = e.target.closest('.action-circle-btn');
-            if(menu && menu.style.display === 'flex' && !btn && !e.target.closest('.plus-menu')) {
+            const menu = document.getElementById('docFabMenu');
+            const btn = e.target.closest('.fab-btn');
+            if(menu && menu.style.display === 'flex' && !btn && !e.target.closest('.fab-menu')) {
                 menu.style.display = 'none';
             }
         });
 
-        function openExportModal() {
-            document.getElementById('plusMenu').style.display = 'none';
-            const session = chatSessions.find(s => s.id === currentSessionId);
-            document.getElementById('exportFilename').value = session.title;
-            document.getElementById('exportModal').style.display = 'flex';
-        }
-        function closeExportModal() {
-            document.getElementById('exportModal').style.display = 'none';
+        function setDocFilter(filter) {
+            currentDocFilter = filter;
+            renderDocsList();
         }
 
-        function confirmExport() {
-            const session = chatSessions.find(s => s.id === currentSessionId);
-            const visibleMsgs = session.messages.filter(m => m.role !== 'system');
-            if (visibleMsgs.length === 0) return alert('没有记录可导出。');
-            let content = '';
-            visibleMsgs.forEach(msg => {
-                const roleName = msg.role === 'user' ? '【我】' : '【AI 设定师】';
-                content += `${roleName}：\n${msg.content}\n\n`;
-            });
+        function renderDocsList() {
+            const query = (document.getElementById('docSearchInput')?.value || '').trim().toLowerCase();
+            const list = document.getElementById('docsListContainer');
+            const tabsContainer = document.getElementById('docTabsContainer');
+            if(!list || !tabsContainer) return;
             
-            let filename = document.getElementById('exportFilename').value.trim() || session.title;
-            const format = document.getElementById('exportFormatModal').value;
+            const cats = new Set(savedDocs.map(d => d.category || '未分类'));
+            let tabsHtml = `<button class="lib-tab ${currentDocFilter === '全部' ? 'active' : ''}" onclick="setDocFilter('全部')">全部</button>`;
+            cats.forEach(c => {
+                tabsHtml += `<button class="lib-tab ${currentDocFilter === c ? 'active' : ''}" onclick="setDocFilter('${c}')">${c}</button>`;
+            });
+            tabsContainer.innerHTML = tabsHtml;
+
+            list.innerHTML = '';
+            
+            let filtered = savedDocs.filter(d => {
+                if (currentDocFilter !== '全部' && (d.category || '未分类') !== currentDocFilter) return false;
+                if (query && !(d.title && d.title.toLowerCase().includes(query))) return false;
+                return true;
+            });
+
+            if(filtered.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:13px; margin-top: 20px;">无相关文档，点击右下角加号新建或导入吧。</div>';
+                return;
+            }
+
+            filtered.forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'api-card';
+                card.innerHTML = `
+                    <div class="api-card-header">
+                        <h4 style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70%;">${d.title || '未命名文档'}</h4>
+                        <span class="api-badge" style="background:var(--text-muted);">${d.category || '未分类'}</span>
+                    </div>
+                    <div class="api-note" style="margin-bottom:12px;">最后修改: ${d.date || '未知'}</div>
+                    <div class="api-actions">
+                        <button class="action-btn flex-center" onclick="openDoc('${d.id}')">编辑</button>
+                        <button class="action-btn action-danger flex-center" onclick="deleteDoc('${d.id}')">删除</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function createNewDoc() {
+            document.getElementById('docFabMenu').style.display = 'none';
+            const newId = 'doc_' + Date.now();
+            const dateStr = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+            savedDocs.unshift({ id: newId, title: '新建文档', category: '未分类', content: '', date: dateStr });
+            localStorage.setItem('savedDocs', JSON.stringify(savedDocs));
+            openDoc(newId);
+        }
+
+        async function importDocFile(event) {
+            document.getElementById('docFabMenu').style.display = 'none';
+            const file = event.target.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            let textContent = '';
+            
+            try {
+                if (ext === 'txt') {
+                    textContent = await file.text();
+                } else if (ext === 'docx') {
+                    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js');
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+                    textContent = result.value;
+                } else if (ext === 'pdf') {
+                    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js');
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContentObj = await page.getTextContent();
+                        textContent += textContentObj.items.map(item => item.str).join(' ') + '\n';
+                    }
+                } else {
+                    throw new Error('仅支持解析 txt, pdf, docx 格式');
+                }
+                
+                const newId = 'doc_' + Date.now();
+                const dateStr = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+                let cleanTitle = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                
+                savedDocs.unshift({ id: newId, title: cleanTitle, category: '导入文件', content: textContent, date: dateStr });
+                localStorage.setItem('savedDocs', JSON.stringify(savedDocs));
+                openDoc(newId);
+                alert('文件导入成功，可继续编辑！');
+            } catch (err) {
+                alert('文件导入失败: ' + err.message);
+            } finally {
+                event.target.value = '';
+            }
+        }
+
+        function openDoc(id) {
+            const doc = savedDocs.find(d => d.id === id);
+            if(!doc) return;
+            document.getElementById('docsListView').style.display = 'none';
+            document.getElementById('docEditorRoom').style.display = 'flex';
+            document.querySelector('.bottom-dock').style.display = 'none'; 
+            
+            document.getElementById('editingDocId').value = doc.id;
+            document.getElementById('docEditTitle').value = doc.title || '';
+            document.getElementById('docEditCategory').value = doc.category || '';
+            document.getElementById('docEditContent').value = doc.content || '';
+        }
+
+        function closeDocEditor() {
+            saveDocProgress();
+            document.getElementById('docEditorRoom').style.display = 'none';
+            document.getElementById('docsListView').style.display = 'block';
+            document.querySelector('.bottom-dock').style.display = 'flex';
+            renderDocsList();
+        }
+
+        function deleteDoc(id) {
+            if(!confirm('确定要删除这个文档吗？')) return;
+            savedDocs = savedDocs.filter(d => d.id !== id);
+            localStorage.setItem('savedDocs', JSON.stringify(savedDocs));
+            renderDocsList();
+        }
+
+        function saveDocProgress() {
+            const id = document.getElementById('editingDocId').value;
+            if(!id) return;
+            const doc = savedDocs.find(d => d.id === id);
+            if(doc) {
+                doc.title = document.getElementById('docEditTitle').value.trim() || '未命名文档';
+                doc.category = document.getElementById('docEditCategory').value.trim() || '未分类';
+                doc.content = document.getElementById('docEditContent').value;
+                doc.date = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+                localStorage.setItem('savedDocs', JSON.stringify(savedDocs));
+            }
+        }
+
+        function openDocExportModal() {
+            saveDocProgress();
+            const id = document.getElementById('editingDocId').value;
+            const doc = savedDocs.find(d => d.id === id);
+            if(!doc) return;
+            if(!doc.title || !doc.category) return alert('请先填写文档标题和分类标签！');
+            
+            document.getElementById('finalExportName').value = doc.title;
+            document.getElementById('docExportModal').style.display = 'flex';
+        }
+        function closeDocExportModal() {
+            document.getElementById('docExportModal').style.display = 'none';
+        }
+
+        function confirmDocExport() {
+            const id = document.getElementById('editingDocId').value;
+            const doc = savedDocs.find(d => d.id === id);
+            if(!doc) return;
+            
+            let filename = document.getElementById('finalExportName').value.trim() || '未命名导出';
+            const format = document.getElementById('finalExportFormat').value;
 
             if (format === 'txt') {
-                downloadDataFile(content, `${filename}.txt`, 'text/plain;charset=utf-8');
-            } else if (format === 'doc') {
-                const formattedContent = content.replace(/\n/g, '<br>');
+                downloadDataFile(doc.content, `${filename}.txt`, 'text/plain;charset=utf-8');
+            } else if (format === 'docx') {
+                const formattedContent = doc.content.replace(/\n/g, '<br>');
                 const htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${filename}</title></head><body style="font-family: 'Microsoft YaHei', sans-serif; line-height: 1.6;">${formattedContent}</body></html>`;
                 downloadDataFile(htmlContent, `${filename}.doc`, 'application/msword;charset=utf-8');
+            } else if (format === 'pdf') {
+                const printWin = window.open('', '', 'width=800,height=600');
+                printWin.document.write(`<html><head><title>${filename}</title></head><body style="font-family: sans-serif; line-height: 1.6; white-space: pre-wrap; padding: 40px;">${doc.content}</body></html>`);
+                printWin.document.close();
+                printWin.focus();
+                setTimeout(() => { printWin.print(); printWin.close(); }, 250);
             }
-            closeExportModal();
+            closeDocExportModal();
         }
 
         /* ======= API 配置机制（增加兜底） ======= */
@@ -1499,8 +1699,7 @@ relationship_with_user:
         function updateStorageStats() {
             const sizePersona = getStringBytes(localStorage.getItem('chatSessions') || '[]');
             const sizeLib = getStringBytes(localStorage.getItem('savedApis') || '[]');
-            // 计算配置内存时把 configPresets 也算上
-            const sizeApi = getStringBytes((localStorage.getItem('currentApiUrl')||'') + (localStorage.getItem('currentApiKey')||'') + (localStorage.getItem('currentModel')||'') + (localStorage.getItem('availableModels')||'[]') + (localStorage.getItem('configPresets')||'[]'));
+            const sizeApi = getStringBytes((localStorage.getItem('currentApiUrl')||'') + (localStorage.getItem('currentApiKey')||'') + (localStorage.getItem('currentModel')||'') + (localStorage.getItem('availableModels')||'[]') + (localStorage.getItem('configPresets')||'[]') + (localStorage.getItem('savedDocs')||'[]'));
             const sizeTotal = sizePersona + sizeLib + sizeApi;
 
             document.getElementById('sizePersonaTxt').innerText = formatBytes(sizePersona);
@@ -1521,7 +1720,7 @@ relationship_with_user:
 
         function exportAllData() {
             const allData = {
-                chatSessions, savedApis, configPresets, currentApiUrl, currentApiKey, currentModel, activePresetId,
+                chatSessions, savedApis, configPresets, savedDocs, currentApiUrl, currentApiKey, currentModel, activePresetId,
                 availableModels: JSON.parse(localStorage.getItem('availableModels') || '[]')
             };
             downloadDataFile(JSON.stringify(allData, null, 2), 'PersonaApp_AllData.json', 'application/json');
@@ -1537,6 +1736,7 @@ relationship_with_user:
                     if (data.chatSessions) localStorage.setItem('chatSessions', JSON.stringify(data.chatSessions));
                     if (data.savedApis) localStorage.setItem('savedApis', JSON.stringify(data.savedApis));
                     if (data.configPresets) localStorage.setItem('configPresets', JSON.stringify(data.configPresets));
+                    if (data.savedDocs) localStorage.setItem('savedDocs', JSON.stringify(data.savedDocs));
                     if (data.currentApiUrl !== undefined) localStorage.setItem('currentApiUrl', data.currentApiUrl);
                     if (data.currentApiKey !== undefined) localStorage.setItem('currentApiKey', data.currentApiKey);
                     if (data.currentModel !== undefined) localStorage.setItem('currentModel', data.currentModel);
@@ -1546,6 +1746,7 @@ relationship_with_user:
                     chatSessions = data.chatSessions || [];
                     savedApis = data.savedApis || [];
                     configPresets = data.configPresets || [];
+                    savedDocs = data.savedDocs || [];
                     currentApiUrl = data.currentApiUrl || '';
                     currentApiKey = data.currentApiKey || '';
                     currentModel = data.currentModel || '';
@@ -1556,6 +1757,7 @@ relationship_with_user:
                     renderSessionList();
                     renderLibrary();
                     renderConfigPresets();
+                    if(typeof renderDocsList === 'function') renderDocsList();
                     updateStorageStats();
                     alert('全部数据导入成功！');
                 } catch(err) { alert('导入失败：文件损坏或格式错误。'); }
