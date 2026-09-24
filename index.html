@@ -25,6 +25,11 @@
             --color-lib: #C7C7CC;
         }
 
+        html, body {
+            height: 100%;
+            overflow: hidden; /* 彻底锁定全网页滑动 */
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
@@ -39,13 +44,23 @@
         .app-container {
             max-width: 600px;
             width: 100%;
-            height: 100vh;
+            height: 100%; /* 贴合 html 高度 */
             background: var(--card-bg);
             display: flex;
             flex-direction: column;
             box-shadow: 0 0 30px rgba(0,0,0,0.04);
             position: relative;
         }
+
+        /* 模板编辑区专属样式 */
+        .template-textarea {
+            width: 100%; box-sizing: border-box; background: #FAFAFA;
+            border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 12px; font-size: 13px; font-family: monospace;
+            resize: none; outline: none; color: var(--text-main);
+            height: 280px; overflow-y: auto; line-height: 1.6;
+        }
+        .template-textarea:disabled { background: var(--input-bg); color: var(--text-muted); cursor: not-allowed; }
 
         svg {
             display: inline-block;
@@ -380,6 +395,13 @@
                             </div>
                             <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>
+                        <button class="ios-menu-item" onclick="openSettingsSubView('templateSubView'); renderTemplateView();">
+                            <div class="menu-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                人设模板
+                            </div>
+                            <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
                         <button class="ios-menu-item" onclick="openSettingsSubView('dataStorageSubView'); updateStorageStats();">
                             <div class="menu-icon">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
@@ -478,6 +500,36 @@
                         </button>
                         <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importAllData(event)">
                     </div>
+                </div>
+
+                <!-- 人设模板子页面 -->
+                <div id="templateSubView" style="display: none;">
+                    <button class="back-btn" onclick="backToSettingsMain()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
+                    </button>
+                    <h2 class="panel-title">人设生成模板</h2>
+                    
+                    <div class="form-group">
+                        <label>切换模板</label>
+                        <select id="templateSelect" onchange="onTemplateChange()"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>模板内容结构</label>
+                        <textarea id="templateContent" class="template-textarea" placeholder="填写自定义 YAML/文本 模板结构..."></textarea>
+                    </div>
+
+                    <div style="display:flex; gap:12px; margin-bottom:12px;">
+                        <button class="btn-secondary flex-center" style="flex:1;" onclick="addNewTemplate()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 新建模板
+                        </button>
+                        <button class="btn-primary flex-center" style="flex:1;" id="saveTemplateBtn" onclick="saveCurrentTemplate()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> 保存更改
+                        </button>
+                    </div>
+                    <button class="btn-secondary flex-center" style="color:#FF3B30;" id="deleteTemplateBtn" onclick="deleteCurrentTemplate()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> 删除当前模板
+                    </button>
                 </div>
             </div>
 
@@ -592,14 +644,127 @@
             });
         }
 
-        const SYSTEM_PROMPT = '你是一个顶级的小说/游戏角色设定师。用户会和你交流人设大纲或灵感，你需要通过对话的形式，逐步帮用户扩写、润色人物设定的基本信息、外貌、性格、背景、特殊技能等。排版整洁。';
+        const SYSTEM_PROMPT = '初始化占位，将由模板系统动态覆盖';
+        const COPYRIGHT_TEXT = "该模板来源于鸣曲相思逸的人设生成器\n\n";
+
+        const BUILTIN_TEMPLATE = `<info>
+<character>
+\`\`\`yaml
+name:                # 角色姓名（中英文）
+chinese_name:        # 中文姓名
+nickname:            # 昵称/称呼（可列出多个）
+age:                 # 年龄
+birthday:            # 生日（含日期和星座）
+gender:              # 性别
+height:              # 身高
+weight:              # 体重（可选）
+identity:            # 身份/职业（可列出多个）
+
+appearance:
+  hair:              # 发型、发色
+  eyes:              # 瞳色、眼型、眼神特征
+  skin:              # 肤色、肤质、特殊标记
+  face_style:        # 面部轮廓、五官特征
+  nose:              # 鼻子特征（可选）
+  lips:              # 嘴唇特征（可选）
+  facial_features:   # 整体面部特征描述（可选）
+  body:              # 身体特征、身形（可选）
+  build:             # 体型、身材
+  attire:            # 着装风格
+  accessories:       # 常用配饰（可选）
+  scars_and_marks:   # 疤痕/胎记/特殊标记（可选）
+  scent:             # 气味（可选）
+  voice:             # 声音特征（可选）
+
+background_story:
+  family_origin:     # 家庭背景、父母、家庭氛围
+  family:            # 家庭成员及关系详情（可选）
+  important_people:  # 重要他人（可选）
+  childhood:         # 童年经历（0-12岁）
+  adolescence:       # 青少年经历（13-18岁）
+  youth:             # 青年经历（19-24岁）（可选）
+  present:           # 现状（当前生活、与{{user}}的羁绊起点）
+
+personality:
+  default:           # 日常性格特质
+  private_romantic:  # 私下/恋爱中的性格特质（可选）
+  social_status:     # 社交形象、口碑（可选）
+  npcs:              # 重要人际关系（可选）
+  personal_traits:   # 具体性格特征列表（可选）
+  core_contradiction: # 角色内心的矛盾点/悖论（可选）
+  emotional_coping_mechanism: # 情绪应对机制（可选）
+
+lifestyle:
+  diet:              # 饮食习惯
+  routine:           # 作息规律
+  hobbies:           # 爱好
+  living:            # 居住环境
+  pets:              # 宠物（可选）
+
+health_conditions:   # 健康状况/疾病/躯体化症状（可选）
+
+speech_style:
+  with_user:         # 对{{user}}说话的方式
+  general:           # 一般说话风格（可选）
+  accent:            # 口音/语言习惯（可选）
+  online_chat:       # 线上聊天风格（可选）
+  romantic_nicknames: # 恋爱中对{{user}}的称呼（可选）
+  deflection_phrases: # 逃避/岔开话题时常用的短语（可选）
+  abstract_expressions: # 抽象表达/胡言乱语示例（可选）
+  sulky_responses:   # 赌气时的回应方式（可选）
+  examples:          # 具体对话示例（可选）
+
+emotional_behaviors:
+  angry:             # 愤怒时的表现
+  happy:             # 快乐时的表现
+  sad:               # 悲伤时的表现
+  anxious:           # 焦虑时的表现（可选）
+  embarrassed:       # 尴尬时的表现（可选）
+  sulky:             # 赌气时的表现（可选）
+  avoiding:          # 逃避时的表现（可选）
+  post_anger_excitement: # 愤怒后突然兴奋的表现（可选）
+
+goals:               # 短期/长期目标（可选）
+weakness:            # 弱点/内心恐惧（可选）
+values:              # 价值观/信念（可选）
+likes:               # 喜欢的事物
+dislikes:            # 不喜欢的事物
+skills:              # 擅长技能
+
+interaction_patterns:
+  with_user:         # 对{{user}}的互动特点
+  with_people_he_likes:   # 对喜欢/亲近的人
+  with_people_he_dislikes: # 对讨厌的人
+  with_strangers:    # 对陌生人
+
+NSFW_information:
+  orientation:       # 性取向
+  experience:        # 性经历简述
+  anatomy:           # 身体特征（可选）
+  sexual_role:       # 性角色（支配/服从等）
+  sexual_habits:     # 性习惯、前戏、事后行为
+  kinks:             # 偏好/癖好
+  limits:            # 禁区/不接受的行为
+
+relationship_with_user:
+  status:            # 关系状态（如：异地恋女友）
+  communication:     # 沟通方式特点
+  nickname_for_user: # 对{{user}}的特定称呼
+  attitude:          # 对{{user}}的态度/行为模式
+\`\`\`
+</character>
+</info>`;
 
         // 数据结构：多个人设会话
         let chatSessions = JSON.parse(localStorage.getItem('chatSessions')) || [];
         let currentSessionId = null;
 
+        // 模板系统数据
+        let customTemplates = JSON.parse(localStorage.getItem('customTemplates')) || [];
+        let activeTemplateId = localStorage.getItem('activeTemplateId') || 'default';
+
         let savedApis = JSON.parse(localStorage.getItem('savedApis')) || [];
-        let configPresets = JSON.parse(localStorage.getItem('configPresets')) || []; // 新增：API配置专属预设库
+        let configPresets = JSON.parse(localStorage.getItem('configPresets')) || []; 
         let currentApiUrl = localStorage.getItem('currentApiUrl') || '';
         let currentApiKey = localStorage.getItem('currentApiKey') || '';
         let currentModel = localStorage.getItem('currentModel') || '';
@@ -632,12 +797,11 @@
             document.getElementById('chatView').style.display = 'none';
             document.getElementById('settingsView').style.display = 'none';
             document.getElementById('libraryView').style.display = 'none';
-            document.querySelector('.bottom-dock').style.display = 'flex'; // 确保底栏显示
+            document.querySelector('.bottom-dock').style.display = 'flex'; 
 
             if (tab === 'chat') {
                 document.getElementById('tab-chat').classList.add('active');
                 document.getElementById('chatView').style.display = 'flex';
-                // 退回到列表视角
                 closeChatRoom(); 
                 renderSessionList();
             } else if (tab === 'settings') {
@@ -656,12 +820,80 @@
             document.getElementById('settingsMainMenu').style.display = 'none';
             document.getElementById('apiConfigSubView').style.display = 'none';
             document.getElementById('dataStorageSubView').style.display = 'none';
+            document.getElementById('templateSubView').style.display = 'none';
             document.getElementById(viewId).style.display = 'block';
         }
         function backToSettingsMain() {
             document.getElementById('apiConfigSubView').style.display = 'none';
             document.getElementById('dataStorageSubView').style.display = 'none';
+            document.getElementById('templateSubView').style.display = 'none';
             document.getElementById('settingsMainMenu').style.display = 'block';
+        }
+
+        /* ======= 模板系统操作 ======= */
+        function renderTemplateView() {
+            const select = document.getElementById('templateSelect');
+            select.innerHTML = '<option value="default">内置模板（鸣曲相思逸原版）</option>';
+            customTemplates.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id; opt.innerText = t.name;
+                select.appendChild(opt);
+            });
+            select.value = activeTemplateId;
+            onTemplateChange();
+        }
+
+        function onTemplateChange() {
+            activeTemplateId = document.getElementById('templateSelect').value;
+            localStorage.setItem('activeTemplateId', activeTemplateId);
+            const textarea = document.getElementById('templateContent');
+            const saveBtn = document.getElementById('saveTemplateBtn');
+            const delBtn = document.getElementById('deleteTemplateBtn');
+
+            if (activeTemplateId === 'default') {
+                textarea.value = '内置模板不允许查看或修改。\n\n生成时将自动采用该优质人设结构。';
+                textarea.disabled = true;
+                saveBtn.style.display = 'none';
+                delBtn.style.display = 'none';
+            } else {
+                const t = customTemplates.find(x => x.id === activeTemplateId);
+                textarea.value = t ? t.content : '';
+                textarea.disabled = false;
+                saveBtn.style.display = 'flex';
+                delBtn.style.display = 'flex';
+            }
+        }
+
+        function addNewTemplate() {
+            const name = prompt('请输入新模板的名称：');
+            if(!name || !name.trim()) return;
+            const newId = 'tpl_' + Date.now();
+            customTemplates.push({ id: newId, name: name.trim(), content: '' });
+            localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
+            activeTemplateId = newId;
+            localStorage.setItem('activeTemplateId', activeTemplateId);
+            renderTemplateView();
+        }
+
+        function saveCurrentTemplate() {
+            if(activeTemplateId === 'default') return;
+            const content = document.getElementById('templateContent').value;
+            const t = customTemplates.find(x => x.id === activeTemplateId);
+            if(t) {
+                t.content = content;
+                localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
+                alert('自定义模板保存成功！');
+            }
+        }
+
+        function deleteCurrentTemplate() {
+            if(activeTemplateId === 'default') return;
+            if(!confirm('确定要删除当前模板吗？')) return;
+            customTemplates = customTemplates.filter(x => x.id !== activeTemplateId);
+            localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
+            activeTemplateId = 'default';
+            localStorage.setItem('activeTemplateId', activeTemplateId);
+            renderTemplateView();
         }
 
         /* ======= 聊天列表与房间管理 ======= */
@@ -791,6 +1023,17 @@
             renderChat();
         }
 
+        function buildSystemPrompt() {
+            let templateStr = '';
+            if (activeTemplateId === 'default') {
+                templateStr = BUILTIN_TEMPLATE;
+            } else {
+                const t = customTemplates.find(x => x.id === activeTemplateId);
+                templateStr = t ? t.content : BUILTIN_TEMPLATE;
+            }
+            return `你是一个顶级的小说/游戏角色设定师。请严格按照下方【模板结构】，根据用户发送的设定大纲/文档生成人设。排版请整洁，每个字段根据逻辑丰满扩写，没有提及的部分请自由发散填补。只输出填好的内容。\n\n【模板结构】：\n${templateStr}`;
+        }
+
         async function generateReply() {
             if (!currentApiUrl || !currentApiKey || !currentModel) {
                 return alert('请先在【设置】中填写 API 配置并拉取/填写模型！');
@@ -803,19 +1046,29 @@
             const genBtn = document.getElementById('generateBtn');
             genBtn.disabled = true; genBtn.style.opacity = '0.5';
 
+            // 动态注入最新选择的模板作为 System Prompt
+            const messagesToSend = JSON.parse(JSON.stringify(session.messages));
+            messagesToSend[0].content = buildSystemPrompt();
+
             try {
                 const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-                    body: JSON.stringify({ model: currentModel, messages: session.messages })
+                    body: JSON.stringify({ model: currentModel, messages: messagesToSend })
                 });
                 const data = await response.json();
                 if (data.error) throw new Error(data.error.message);
                 
+                // 给生成的回答加上标源文本，并强制换行
+                let finalReply = data.choices[0].message.content;
+                if (!finalReply.startsWith(COPYRIGHT_TEXT.trim())) {
+                    finalReply = COPYRIGHT_TEXT + finalReply;
+                }
+                
                 session.messages.push({ 
                     role: 'assistant', 
-                    content: data.choices[0].message.content,
-                    variants: [data.choices[0].message.content],
+                    content: finalReply,
+                    variants: [finalReply],
                     currentVariant: 0
                 });
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
@@ -841,7 +1094,9 @@
             if(regenBtn) { regenBtn.disabled = true; regenBtn.innerHTML = '思考中...'; }
 
             try {
-                const historyToSent = session.messages.slice(0, index);
+                const historyToSent = JSON.parse(JSON.stringify(session.messages.slice(0, index)));
+                historyToSent[0].content = buildSystemPrompt();
+
                 const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
@@ -850,7 +1105,11 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error.message);
                 
-                const newReply = data.choices[0].message.content;
+                let newReply = data.choices[0].message.content;
+                if (!newReply.startsWith(COPYRIGHT_TEXT.trim())) {
+                    newReply = COPYRIGHT_TEXT + newReply;
+                }
+
                 const msg = session.messages[index];
                 msg.variants.push(newReply);
                 msg.currentVariant = msg.variants.length - 1;
