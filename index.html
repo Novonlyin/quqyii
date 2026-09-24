@@ -507,29 +507,35 @@
                     <button class="back-btn" onclick="backToSettingsMain()">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
                     </button>
-                    <h2 class="panel-title">人设生成模板</h2>
                     
-                    <div class="form-group">
-                        <label>切换模板</label>
-                        <select id="templateSelect" onchange="onTemplateChange()"></select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>模板内容结构</label>
-                        <textarea id="templateContent" class="template-textarea" placeholder="填写自定义 YAML/文本 模板结构..."></textarea>
-                    </div>
-
-                    <div style="display:flex; gap:12px; margin-bottom:12px;">
-                        <button class="btn-secondary flex-center" style="flex:1;" onclick="addNewTemplate()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 新建模板
-                        </button>
-                        <button class="btn-primary flex-center" style="flex:1;" id="saveTemplateBtn" onclick="saveCurrentTemplate()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> 保存更改
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h2 class="panel-title" style="margin:0;">人设生成模板</h2>
+                        <button class="icon-btn" onclick="openTemplateEditor()" style="color:var(--text-main); background:var(--input-bg); padding:8px; border-radius:10px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                     </div>
-                    <button class="btn-secondary flex-center" style="color:#FF3B30;" id="deleteTemplateBtn" onclick="deleteCurrentTemplate()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> 删除当前模板
-                    </button>
+
+                    <div class="api-list" id="templateList"></div>
+                </div>
+            </div>
+
+            <!-- 自定义模板编辑弹窗 -->
+            <div class="modal-overlay" id="templateModal">
+                <div class="modal-content" style="width: 90%; max-width: 450px;">
+                    <h3 class="modal-title" id="templateModalTitle">编辑模板</h3>
+                    <input type="hidden" id="editingTplId">
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label>模板备注名称</label>
+                        <input type="text" id="tplName" placeholder="例如：赛博朋克风模板">
+                    </div>
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label>模板内容</label>
+                        <textarea id="tplContent" class="template-textarea" style="height: 300px; font-family: monospace;"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="closeTemplateEditor()">取消</button>
+                        <button class="btn-primary" id="saveTplBtn" onclick="saveTemplate()">确认保存</button>
+                    </div>
                 </div>
             </div>
 
@@ -645,10 +651,11 @@
         }
 
         const SYSTEM_PROMPT = '初始化占位，将由模板系统动态覆盖';
-        const COPYRIGHT_TEXT = "该模板来源于鸣曲相思逸的人设生成器\n\n";
 
         const BUILTIN_TEMPLATE = `<info>
 <character>
+该模板来源于鸣曲相思逸的人设生成器
+
 \`\`\`yaml
 name:                # 角色姓名（中英文）
 chinese_name:        # 中文姓名
@@ -832,71 +839,131 @@ relationship_with_user:
 
         /* ======= 模板系统操作 ======= */
         function renderTemplateView() {
-            const select = document.getElementById('templateSelect');
-            select.innerHTML = '<option value="default">内置模板（鸣曲相思逸原版）</option>';
+            const list = document.getElementById('templateList');
+            if(!list) return;
+            list.innerHTML = '';
+            
+            const defaultCard = document.createElement('div');
+            defaultCard.className = 'api-card';
+            defaultCard.innerHTML = `
+                <div class="api-card-header">
+                    <h4>内置模板（鸣曲相思逸原版）</h4>
+                    <span class="api-badge" style="background:var(--text-muted);">系统内置</span>
+                </div>
+                <div class="api-actions" style="margin-top:12px;">
+                    <button class="action-btn flex-center" onclick="applyTemplate('default')">
+                        ${activeTemplateId === 'default' ? '已应用当前' : '应用模板'}
+                    </button>
+                    <button class="action-btn flex-center" onclick="openTemplateEditor('default')">查看</button>
+                </div>
+            `;
+            list.appendChild(defaultCard);
+
             customTemplates.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.id; opt.innerText = t.name;
-                select.appendChild(opt);
+                const card = document.createElement('div');
+                card.className = 'api-card';
+                card.innerHTML = `
+                    <div class="api-card-header">
+                        <h4>${t.name || '未命名模板'}</h4>
+                        <span class="api-badge" style="background:var(--btn-bg);">自定义</span>
+                    </div>
+                    <div class="api-actions" style="margin-top:12px;">
+                        <button class="action-btn flex-center" onclick="applyTemplate('${t.id}')">
+                            ${activeTemplateId === t.id ? '已应用当前' : '应用模板'}
+                        </button>
+                        <button class="action-btn flex-center" onclick="openTemplateEditor('${t.id}')">编辑</button>
+                        <button class="action-btn action-danger flex-center" onclick="deleteTemplate('${t.id}')">删除</button>
+                    </div>
+                `;
+                list.appendChild(card);
             });
-            select.value = activeTemplateId;
-            onTemplateChange();
         }
 
-        function onTemplateChange() {
-            activeTemplateId = document.getElementById('templateSelect').value;
+        function applyTemplate(id) {
+            activeTemplateId = id;
             localStorage.setItem('activeTemplateId', activeTemplateId);
-            const textarea = document.getElementById('templateContent');
-            const saveBtn = document.getElementById('saveTemplateBtn');
-            const delBtn = document.getElementById('deleteTemplateBtn');
+            renderTemplateView();
+            alert('已成功切换！新对话的人设生成将使用该模板。');
+        }
 
-            if (activeTemplateId === 'default') {
-                textarea.value = '内置模板不允许查看或修改。\n\n生成时将自动采用该优质人设结构。';
-                textarea.disabled = true;
+        function openTemplateEditor(id) {
+            document.getElementById('templateModal').style.display = 'flex';
+            const nameInput = document.getElementById('tplName');
+            const contentInput = document.getElementById('tplContent');
+            const saveBtn = document.getElementById('saveTplBtn');
+            const idInput = document.getElementById('editingTplId');
+
+            if (!id) {
+                // 点击加号新建
+                document.getElementById('templateModalTitle').innerText = '新建自定义模板';
+                idInput.value = '';
+                nameInput.value = '';
+                contentInput.value = '<info>\n<character>\n该模板来源于鸣曲相思逸的人设生成器\n\n```yaml\n\n```\n</character>\n</info>';
+                nameInput.disabled = false;
+                contentInput.disabled = false;
+                saveBtn.style.display = 'block';
+            } else if (id === 'default') {
+                // 查看内置不可改
+                document.getElementById('templateModalTitle').innerText = '查看内置模板 (不可修改)';
+                idInput.value = 'default';
+                nameInput.value = '内置模板（鸣曲相思逸原版）';
+                contentInput.value = BUILTIN_TEMPLATE;
+                nameInput.disabled = true;
+                contentInput.disabled = true;
                 saveBtn.style.display = 'none';
-                delBtn.style.display = 'none';
             } else {
-                const t = customTemplates.find(x => x.id === activeTemplateId);
-                textarea.value = t ? t.content : '';
-                textarea.disabled = false;
-                saveBtn.style.display = 'flex';
-                delBtn.style.display = 'flex';
+                // 编辑已有的自定义
+                document.getElementById('templateModalTitle').innerText = '编辑自定义模板';
+                const t = customTemplates.find(x => x.id === id);
+                idInput.value = t.id;
+                nameInput.value = t.name;
+                contentInput.value = t.content;
+                nameInput.disabled = false;
+                contentInput.disabled = false;
+                saveBtn.style.display = 'block';
             }
         }
 
-        function addNewTemplate() {
-            const name = prompt('请输入新模板的名称：');
-            if(!name || !name.trim()) return;
-            const newId = 'tpl_' + Date.now();
-            customTemplates.push({ id: newId, name: name.trim(), content: '' });
-            localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
-            activeTemplateId = newId;
-            localStorage.setItem('activeTemplateId', activeTemplateId);
-            renderTemplateView();
+        function closeTemplateEditor() {
+            document.getElementById('templateModal').style.display = 'none';
         }
 
-        function saveCurrentTemplate() {
-            if(activeTemplateId === 'default') return;
-            const content = document.getElementById('templateContent').value;
-            const t = customTemplates.find(x => x.id === activeTemplateId);
-            if(t) {
-                t.content = content;
-                localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
-                alert('自定义模板保存成功！');
+        function saveTemplate() {
+            const id = document.getElementById('editingTplId').value;
+            const name = document.getElementById('tplName').value.trim();
+            const content = document.getElementById('tplContent').value.trim();
+
+            if (!name || !content) return alert('模板名称和内容不能为空！');
+
+            if (id && id !== 'default') {
+                const t = customTemplates.find(x => x.id === id);
+                if (t) {
+                    t.name = name;
+                    t.content = content;
+                }
+            } else {
+                const newId = 'tpl_' + Date.now();
+                customTemplates.push({ id: newId, name, content });
             }
-        }
-
-        function deleteCurrentTemplate() {
-            if(activeTemplateId === 'default') return;
-            if(!confirm('确定要删除当前模板吗？')) return;
-            customTemplates = customTemplates.filter(x => x.id !== activeTemplateId);
+            
             localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
-            activeTemplateId = 'default';
-            localStorage.setItem('activeTemplateId', activeTemplateId);
+            closeTemplateEditor();
             renderTemplateView();
         }
 
-        /* ======= 聊天列表与房间管理 ======= */
+        function deleteTemplate(id) {
+            if(id === 'default') return;
+            if(!confirm('确定要删除这个自定义模板吗？')) return;
+            customTemplates = customTemplates.filter(x => x.id !== id);
+            localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
+            if (activeTemplateId === id) {
+                activeTemplateId = 'default';
+                localStorage.setItem('activeTemplateId', activeTemplateId);
+            }
+            renderTemplateView();
+        }
+
+        /* ======= 数据储存统计 ======= */
         function renderSessionList() {
             const list = document.getElementById('sessionList');
             list.innerHTML = '';
@@ -1031,7 +1098,7 @@ relationship_with_user:
                 const t = customTemplates.find(x => x.id === activeTemplateId);
                 templateStr = t ? t.content : BUILTIN_TEMPLATE;
             }
-            return `你是一个顶级的小说/游戏角色设定师。请严格按照下方【模板结构】，根据用户发送的设定大纲/文档生成人设。排版请整洁，每个字段根据逻辑丰满扩写，没有提及的部分请自由发散填补。只输出填好的内容。\n\n【模板结构】：\n${templateStr}`;
+            return `你是一个顶级的小说/游戏角色设定师。请严格按照下方【模板结构】，根据用户发送的设定大纲/文档生成人设。排版请整洁，每个字段根据逻辑丰满扩写，没有提及的部分请自由发散填补。请原样保留模板中关于“该模板来源于鸣曲相思逸”的任何字样，并只输出填好的内容。\n\n【模板结构】：\n${templateStr}`;
         }
 
         async function generateReply() {
@@ -1046,7 +1113,6 @@ relationship_with_user:
             const genBtn = document.getElementById('generateBtn');
             genBtn.disabled = true; genBtn.style.opacity = '0.5';
 
-            // 动态注入最新选择的模板作为 System Prompt
             const messagesToSend = JSON.parse(JSON.stringify(session.messages));
             messagesToSend[0].content = buildSystemPrompt();
 
@@ -1059,11 +1125,7 @@ relationship_with_user:
                 const data = await response.json();
                 if (data.error) throw new Error(data.error.message);
                 
-                // 给生成的回答加上标源文本，并强制换行
                 let finalReply = data.choices[0].message.content;
-                if (!finalReply.startsWith(COPYRIGHT_TEXT.trim())) {
-                    finalReply = COPYRIGHT_TEXT + finalReply;
-                }
                 
                 session.messages.push({ 
                     role: 'assistant', 
@@ -1084,7 +1146,6 @@ relationship_with_user:
             if (!currentApiUrl || !currentApiKey || !currentModel) return alert('请先在【设置】中配置 API！');
             const session = chatSessions.find(s => s.id === currentSessionId);
             
-            // 提醒截断后续聊天
             if (index < session.messages.length - 1) {
                 if(!confirm('重回生成将会删除此条消息之后的所有对话记录，确定继续吗？')) return;
                 session.messages.splice(index + 1);
@@ -1106,9 +1167,6 @@ relationship_with_user:
                 if (data.error) throw new Error(data.error.message);
                 
                 let newReply = data.choices[0].message.content;
-                if (!newReply.startsWith(COPYRIGHT_TEXT.trim())) {
-                    newReply = COPYRIGHT_TEXT + newReply;
-                }
 
                 const msg = session.messages[index];
                 msg.variants.push(newReply);
@@ -1119,7 +1177,7 @@ relationship_with_user:
                 renderChat();
             } catch (error) {
                 alert('重回失败，请检查网络或 API 配置。\n错误: ' + error.message);
-                renderChat(); // 恢复UI
+                renderChat(); 
             }
         }
 
