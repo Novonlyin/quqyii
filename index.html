@@ -137,7 +137,18 @@
         .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
         .message { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; word-wrap: break-word; }
         .msg-user { align-self: flex-end; background: var(--btn-bg); color: #FFFFFF; border-bottom-right-radius: 4px; }
-        .msg-ai { align-self: flex-start; background: var(--input-bg); color: var(--text-main); border-bottom-left-radius: 4px; }
+        .msg-ai { align-self: flex-start; background: var(--input-bg); color: var(--text-main); border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
+        
+        /* 聊天重回与切换版本样式 */
+        .msg-ai-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 8px; margin-top: 2px; }
+        .variant-switch { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .variant-btn { background: transparent; border: none; padding: 4px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+        .variant-btn:hover:not(:disabled) { background: rgba(0,0,0,0.05); color: var(--text-main); }
+        .variant-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .variant-btn svg { width: 14px; height: 14px; stroke-width: 2.5; }
+        .regen-btn { background: transparent; border: none; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 8px; }
+        .regen-btn:hover:not(:disabled) { background: rgba(0,0,0,0.05); color: var(--text-main); }
+        .regen-btn svg { width: 14px; height: 14px; stroke-width: 2; }
 
         .chat-input-area {
             padding: 12px 16px; background: #FAFAFA; border-top: 1px solid var(--border-color);
@@ -723,22 +734,49 @@
             const session = chatSessions.find(s => s.id === currentSessionId);
             if(!session) return;
 
-            const visibleMsgs = session.messages.filter(m => m.role !== 'system');
-            if(visibleMsgs.length === 0) {
+            if(session.messages.length <= 1) {
                 chatBox.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:14px;">输入大纲开始生成吧！</div>';
                 return;
             }
 
-            visibleMsgs.forEach(msg => {
+            for (let i = 1; i < session.messages.length; i++) {
+                const msg = session.messages[i];
                 const div = document.createElement('div');
                 div.className = 'message ' + (msg.role === 'user' ? 'msg-user' : 'msg-ai');
-                div.innerHTML = msg.content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                
+                if (msg.role === 'user') {
+                    div.innerHTML = msg.content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                } else {
+                    // 数据兼容：如果旧消息没有变体版本数组，就给它初始化一个
+                    if(!msg.variants) { msg.variants = [msg.content]; msg.currentVariant = 0; }
+                    
+                    const contentHtml = msg.variants[msg.currentVariant].replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                    
+                    const footerHtml = `
+                        <div class="msg-ai-footer">
+                            <div class="variant-switch">
+                                <button class="variant-btn" onclick="switchVariant(${i}, -1)" ${msg.currentVariant === 0 ? 'disabled' : ''}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                </button>
+                                <span>${msg.currentVariant + 1} / ${msg.variants.length}</span>
+                                <button class="variant-btn" onclick="switchVariant(${i}, 1)" ${msg.currentVariant === msg.variants.length - 1 ? 'disabled' : ''}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6" transform="rotate(180 12 12)"></polyline></svg>
+                                </button>
+                            </div>
+                            <button class="regen-btn" id="regen_btn_${i}" onclick="regenerateReply(${i})">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                                重回
+                            </button>
+                        </div>
+                    `;
+                    div.innerHTML = `<div class="msg-content">${contentHtml}</div>${footerHtml}`;
+                }
                 chatBox.appendChild(div);
-            });
+            }
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
         }
 
-        /* ======= 发送与生成 ======= */
+        /* ======= 发送、生成与重回 ======= */
         function sendMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
@@ -757,16 +795,13 @@
             if (!currentApiUrl || !currentApiKey || !currentModel) {
                 return alert('请先在【设置】中填写 API 配置并拉取/填写模型！');
             }
-
             const session = chatSessions.find(s => s.id === currentSessionId);
-            // 如果最后一条不是 user，说明还没发话
             if(session.messages[session.messages.length-1].role !== 'user') {
                 return alert('请先发送你想说的大纲或要求，然后再点击生成。');
             }
 
             const genBtn = document.getElementById('generateBtn');
-            genBtn.disabled = true;
-            genBtn.style.opacity = '0.5';
+            genBtn.disabled = true; genBtn.style.opacity = '0.5';
 
             try {
                 const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
@@ -777,14 +812,68 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error.message);
                 
-                session.messages.push({ role: 'assistant', content: data.choices[0].message.content });
+                session.messages.push({ 
+                    role: 'assistant', 
+                    content: data.choices[0].message.content,
+                    variants: [data.choices[0].message.content],
+                    currentVariant: 0
+                });
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderChat();
             } catch (error) {
                 alert('生成失败，请检查网络或 API 配置。\n错误: ' + error.message);
             } finally {
-                genBtn.disabled = false;
-                genBtn.style.opacity = '1';
+                genBtn.disabled = false; genBtn.style.opacity = '1';
+            }
+        }
+
+        async function regenerateReply(index) {
+            if (!currentApiUrl || !currentApiKey || !currentModel) return alert('请先在【设置】中配置 API！');
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            
+            // 提醒截断后续聊天
+            if (index < session.messages.length - 1) {
+                if(!confirm('重回生成将会删除此条消息之后的所有对话记录，确定继续吗？')) return;
+                session.messages.splice(index + 1);
+            }
+
+            const regenBtn = document.getElementById('regen_btn_' + index);
+            if(regenBtn) { regenBtn.disabled = true; regenBtn.innerHTML = '思考中...'; }
+
+            try {
+                const historyToSent = session.messages.slice(0, index);
+                const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+                    body: JSON.stringify({ model: currentModel, messages: historyToSent })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                
+                const newReply = data.choices[0].message.content;
+                const msg = session.messages[index];
+                msg.variants.push(newReply);
+                msg.currentVariant = msg.variants.length - 1;
+                msg.content = newReply;
+                
+                localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+                renderChat();
+            } catch (error) {
+                alert('重回失败，请检查网络或 API 配置。\n错误: ' + error.message);
+                renderChat(); // 恢复UI
+            }
+        }
+
+        function switchVariant(msgIndex, delta) {
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            const msg = session.messages[msgIndex];
+            if(!msg || !msg.variants) return;
+            let next = msg.currentVariant + delta;
+            if(next >= 0 && next < msg.variants.length) {
+                msg.currentVariant = next;
+                msg.content = msg.variants[next];
+                localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+                renderChat();
             }
         }
 
@@ -1345,7 +1434,7 @@
                 let dramaBadge = api.drama === '有瓜' ? `<span class="api-badge badge-drama">避雷: ${api.dramaDetail}</span>` : '';
                 let typeBadge = api.type === '公益站' ? `<span class="api-badge badge-public">公益站</span>` : `<span class="api-badge badge-paid">付费站 / ${api.price || '未知'}</span>`;
 
-                // 渲染淘宝式快照追评列表
+                // 渲染淘宝式快照追评列表 (仅评价、日期和底部分离的单独应用按钮，绝对不带账密)
                 let followUpHtml = '';
                 if (api.followUps && api.followUps.length > 0) {
                     followUpHtml = `<div class="follow-up-box">` + 
@@ -1362,36 +1451,13 @@
                                 </div>
                                 <div class="api-badges" style="margin-bottom: 8px;">${fType} ${fDrama}</div>
                                 <div class="api-note">${f.note || '无备注记录'}</div>
-                                <div style="margin-top:12px;"></div>
-                                <div class="api-info-row" style="background:#EFEFF4;">
-                                    <span class="api-info-label">账号</span>
-                                    <input type="text" value="${f.account || ''}" readonly>
-                                    <button class="icon-btn" onclick="copyText('${f.account || ''}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                                </div>
-                                <div class="api-info-row" style="background:#EFEFF4;">
-                                    <span class="api-info-label">密码</span>
-                                    <input type="password" id="pwd_f_${uniq}" value="${f.accountPwd || ''}" readonly>
-                                    <button class="icon-btn" onclick="toggleKey('pwd_f_${uniq}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
-                                    <button class="icon-btn" onclick="copyText('${f.accountPwd || ''}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                                </div>
-                                <div class="api-info-row" style="background:#EFEFF4;">
-                                    <span class="api-info-label">地址</span>
-                                    <input type="text" value="${f.url}" readonly>
-                                    <button class="icon-btn" onclick="copyText('${f.url}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                                </div>
-                                <div class="api-info-row" style="background:#EFEFF4;">
-                                    <span class="api-info-label">密钥</span>
-                                    <input type="password" id="key_f_${uniq}" value="${f.key}" readonly>
-                                    <button class="icon-btn" onclick="toggleKey('key_f_${uniq}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
-                                    <button class="icon-btn" onclick="copyText('${f.key}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                                </div>
-                                <button class="action-btn flex-center" style="margin-top:8px;" onclick="applyFollowUpApi('${api.id}', ${idx})">应用此追评配置</button>
+                                <button class="action-btn flex-center" style="margin-top:8px; width: 100%;" onclick="applyFollowUpApi('${api.id}', ${idx})">应用此追评配置</button>
                             </div>`;
                         }).join('') + 
                     `</div>`;
                 }
 
-                // 渲染主卡片
+                // 渲染主卡片：账密置顶排版，追评最末
                 card.innerHTML = `
                     <div class="api-card-header">
                         <h4>${api.name || '未命名站子'}</h4>
@@ -1401,9 +1467,6 @@
                         ${typeBadge}
                         ${dramaBadge}
                     </div>
-                    <div class="api-note">${api.note || '无初代备注记录'}</div>
-                    ${followUpHtml}
-                    <div style="margin-top:16px;"></div>
                     
                     <div class="api-info-row">
                         <span class="api-info-label">账号</span>
@@ -1422,6 +1485,9 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         </button>
                     </div>
+
+                    <div class="api-note" style="margin-top:16px;">初代备注：${api.note || '无初代备注记录'}</div>
+                    <div style="margin-top:12px;"></div>
                     
                     <div class="api-info-row">
                         <span class="api-info-label">地址</span>
@@ -1440,6 +1506,10 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         </button>
                     </div>
+
+                    <!-- 追评挂载在最后 -->
+                    ${followUpHtml}
+
                     <div class="api-actions">
                         <button class="action-btn flex-center" onclick="openFollowUpForm('${api.id}')">写追评</button>
                         <button class="action-btn flex-center" onclick="applyLibraryApi('${api.id}')">应用初代</button>
