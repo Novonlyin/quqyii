@@ -195,12 +195,16 @@
         .fab-container { position: absolute; bottom: 20px; right: 20px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
         .fab-menu { background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; width: 130px; transform-origin: bottom right; animation: popIn 0.2s ease-out; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .fab-menu-item { background: transparent; border: none; padding: 12px 14px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color); }
+        .fab-menu-item { background: transparent; border: none; padding: 12px 14px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color); }
         .fab-menu-item:last-child { border-bottom: none; }
         .fab-menu-item:active { background: var(--input-bg); }
+        .fab-menu-item svg { width: 18px; height: 18px; flex-shrink: 0; }
         .fab-btn { background: var(--btn-bg); color: #FFF; border: none; border-radius: 50%; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.2s; }
         .fab-btn:active { transform: scale(0.95); }
         .fab-btn svg { width: 24px; height: 24px; stroke-width: 2.5; }
+        
+        /* 生成规则专属 UI */
+        .rule-category-title { font-size: 13px; font-weight: 600; color: var(--text-muted); margin: 20px 0 8px 4px; }
 
         /* 模态框 (通用) */
         .modal-overlay {
@@ -581,24 +585,44 @@
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
                     </button>
                     
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                         <h2 class="panel-title" style="margin:0;">生成避雷规则</h2>
-                        <!-- iOS 风格的开关按钮 -->
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="rulesToggle" onchange="toggleRules()">
-                            <span class="slider"></span>
-                        </label>
+                        <button class="icon-btn" onclick="openRuleModal()" style="color:var(--text-main); background:var(--input-bg); padding:8px; border-radius:10px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
                     </div>
 
-                    <div style="margin-bottom: 16px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
-                        开启此开关后，生成人设时系统将强制让大模型读取并避开下方的条目规则。
+                    <div style="margin-bottom: 8px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                        在生成人设时，大模型将强制读取并避开处于“开启”状态的条目规则。内置规则不可修改。
                     </div>
-
-                    <button class="btn-secondary flex-center" style="margin-bottom:16px;" onclick="addRule()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 自定义新规则
-                    </button>
 
                     <div class="api-list" id="rulesList"></div>
+                </div>
+            </div>
+
+            <!-- 自定义规则编辑弹窗 -->
+            <div class="modal-overlay" id="ruleModal">
+                <div class="modal-content" style="width: 90%; max-width: 400px;">
+                    <h3 class="modal-title" id="ruleModalTitle">新建条目规则</h3>
+                    <input type="hidden" id="editingRuleId">
+                    <div style="display:flex; gap:12px;">
+                        <div class="form-group" style="flex:2; margin-bottom:12px;">
+                            <label>规则条目名称</label>
+                            <input type="text" id="ruleName" placeholder="例如：禁止大众名">
+                        </div>
+                        <div class="form-group" style="flex:1; margin-bottom:12px;">
+                            <label>分类归纳</label>
+                            <input type="text" id="ruleCategory" placeholder="如: 命名类">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label>具体的避雷/限制内容</label>
+                        <textarea id="ruleContent" class="template-textarea" style="height: 160px; font-family: inherit;" placeholder="请输入让AI避雷的详细描述..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="closeRuleModal()">取消</button>
+                        <button class="btn-primary" onclick="saveRule()">确认保存</button>
+                    </div>
                 </div>
             </div>
 
@@ -911,11 +935,22 @@ relationship_with_user:
         let customTemplates = JSON.parse(localStorage.getItem('customTemplates')) || [];
         let activeTemplateId = localStorage.getItem('activeTemplateId') || 'default';
 
-        // 规则系统数据
-        let genRules = JSON.parse(localStorage.getItem('genRules')) || [
-            { id: 'rule_1', content: '人设禁止生成乙游男主的名字，名字禁止过于大众' }
-        ];
-        let rulesEnabled = localStorage.getItem('rulesEnabled') !== 'false';
+        // 规则系统数据（引入独立开关、分类与内置润色版避雷）
+        let genRules = JSON.parse(localStorage.getItem('genRules')) || [];
+        // 数据迁移兼容：如果旧数据没有 name 字段，则进行清理重建
+        if (genRules.length === 0 || typeof genRules[0].name === 'undefined') {
+            genRules = [
+                {
+                    id: 'built_in_rule_1',
+                    name: '起名避雷规范 (拒绝乙游/大众化)',
+                    category: '基础设定规范',
+                    content: '禁止使用国内知名乙女游戏（如《恋与制作人》、《光与夜之恋》、《未定事件簿》、《时空中的绘旅人》、《世界之外》等）中男主的名字或高度相似的代称。禁止使用极其常见、烂大街的网文大众名（如霸总常用的顾、冷、傅姓配合辰、轩、宇等字）。名字必须符合世界观且具有独特的辨识度、富有内涵。',
+                    enabled: true,
+                    isBuiltIn: true
+                }
+            ];
+            localStorage.setItem('genRules', JSON.stringify(genRules));
+        }
 
         let savedApis = JSON.parse(localStorage.getItem('savedApis')) || [];
         let configPresets = JSON.parse(localStorage.getItem('configPresets')) || []; 
@@ -1309,8 +1344,9 @@ relationship_with_user:
             }
             
             let ruleStr = '';
-            if (rulesEnabled && genRules.length > 0) {
-                ruleStr = "\n\n【必须遵守的生成限制与规则】：\n" + genRules.map((r, i) => `${i+1}. ${r.content}`).join('\n');
+            const activeRules = genRules.filter(r => r.enabled);
+            if (activeRules.length > 0) {
+                ruleStr = "\n\n【必须严格遵守的生成限制与避雷规则】：\n" + activeRules.map((r, i) => `${i+1}. ${r.content}`).join('\n');
             }
 
             return `你是一个顶级的小说/游戏角色设定师。请严格按照下方【模板结构】，根据用户发送的设定大纲/文档/图片生成人设。排版请整洁，每个字段根据逻辑丰满扩写，没有提及的部分请自由发散填补。请原样保留模板中关于“该模板来源于鸣曲相思逸”的任何字样，并只输出填好的内容。${ruleStr}\n\n【模板结构】：\n${templateStr}`;
@@ -1508,35 +1544,114 @@ relationship_with_user:
 
         /* ======= 生成规则机制 ======= */
         function renderRulesView() {
-            document.getElementById('rulesToggle').checked = rulesEnabled;
             const list = document.getElementById('rulesList');
             list.innerHTML = '';
+
+            const groups = {};
             genRules.forEach(r => {
-                const card = document.createElement('div');
-                card.className = 'api-info-row';
-                card.style.justifyContent = 'space-between';
-                card.innerHTML = `
-                    <div style="flex:1; overflow:hidden; font-size:14px; color:var(--text-main);">${r.content}</div>
-                    <button class="icon-btn" style="background:#FFEBEA; color:#FF3B30;" onclick="deleteRule('${r.id}')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                `;
-                list.appendChild(card);
+                const cat = r.category || '未分类';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(r);
             });
+
+            for (const cat in groups) {
+                const catTitle = document.createElement('div');
+                catTitle.className = 'rule-category-title';
+                catTitle.innerText = cat;
+                list.appendChild(catTitle);
+
+                groups[cat].forEach(r => {
+                    const card = document.createElement('div');
+                    card.className = 'api-card';
+                    card.style.marginBottom = '12px';
+
+                    let actionHtml = '';
+                    if (r.isBuiltIn) {
+                        actionHtml = `<div style="font-size:12px; color:var(--text-muted); margin-top:8px;">(内置基础防雷规则，不可修改内容)</div>`;
+                    } else {
+                        actionHtml = `
+                            <div class="api-actions" style="margin-top:12px;">
+                                <button class="action-btn flex-center" onclick="openRuleModal('${r.id}')">查看/编辑</button>
+                                <button class="action-btn action-danger flex-center" onclick="deleteRule('${r.id}')">删除</button>
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="api-card-header" style="margin-bottom:0;">
+                            <h4 style="font-size:15px;">${r.name}</h4>
+                            <label class="toggle-switch" style="transform: scale(0.85); transform-origin: right center;">
+                                <input type="checkbox" onchange="toggleSingleRule('${r.id}')" ${r.enabled ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        ${actionHtml}
+                    `;
+                    list.appendChild(card);
+                });
+            }
         }
-        function toggleRules() {
-            rulesEnabled = document.getElementById('rulesToggle').checked;
-            localStorage.setItem('rulesEnabled', rulesEnabled);
+
+        function toggleSingleRule(id) {
+            const r = genRules.find(x => x.id === id);
+            if (r) {
+                r.enabled = !r.enabled;
+                localStorage.setItem('genRules', JSON.stringify(genRules));
+            }
         }
-        function addRule() {
-            const text = prompt('请输入你要新增的避雷/生成规则：');
-            if(!text || !text.trim()) return;
-            genRules.push({ id: 'rule_' + Date.now(), content: text.trim() });
+
+        function openRuleModal(id = '') {
+            document.getElementById('ruleModal').style.display = 'flex';
+            if (!id) {
+                document.getElementById('ruleModalTitle').innerText = '新建条目规则';
+                document.getElementById('editingRuleId').value = '';
+                document.getElementById('ruleName').value = '';
+                document.getElementById('ruleCategory').value = '';
+                document.getElementById('ruleContent').value = '';
+            } else {
+                document.getElementById('ruleModalTitle').innerText = '编辑条目规则';
+                const r = genRules.find(x => x.id === id);
+                document.getElementById('editingRuleId').value = r.id;
+                document.getElementById('ruleName').value = r.name;
+                document.getElementById('ruleCategory').value = r.category || '';
+                document.getElementById('ruleContent').value = r.content;
+            }
+        }
+
+        function closeRuleModal() {
+            document.getElementById('ruleModal').style.display = 'none';
+        }
+
+        function saveRule() {
+            const id = document.getElementById('editingRuleId').value;
+            const name = document.getElementById('ruleName').value.trim();
+            const category = document.getElementById('ruleCategory').value.trim();
+            const content = document.getElementById('ruleContent').value.trim();
+
+            if (!name || !content) return alert('规则名称和详细避雷内容不能为空！');
+
+            if (id) {
+                const r = genRules.find(x => x.id === id);
+                if (r) {
+                    r.name = name;
+                    r.category = category;
+                    r.content = content;
+                }
+            } else {
+                genRules.push({
+                    id: 'rule_' + Date.now(),
+                    name, category, content,
+                    enabled: true, isBuiltIn: false
+                });
+            }
+            
             localStorage.setItem('genRules', JSON.stringify(genRules));
+            closeRuleModal();
             renderRulesView();
         }
+
         function deleteRule(id) {
-            if(!confirm('确定删除该规则吗？')) return;
+            if(!confirm('确定删除该自定义规则吗？')) return;
             genRules = genRules.filter(r => r.id !== id);
             localStorage.setItem('genRules', JSON.stringify(genRules));
             renderRulesView();
