@@ -574,6 +574,32 @@
 
                     <div class="api-list" id="templateList"></div>
                 </div>
+
+                <!-- 生成避雷规则子页面 -->
+                <div id="rulesSubView" style="display: none;">
+                    <button class="back-btn" onclick="backToSettingsMain()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
+                    </button>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h2 class="panel-title" style="margin:0;">生成避雷规则</h2>
+                        <!-- iOS 风格的开关按钮 -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="rulesToggle" onchange="toggleRules()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div style="margin-bottom: 16px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                        开启此开关后，生成人设时系统将强制让大模型读取并避开下方的条目规则。
+                    </div>
+
+                    <button class="btn-secondary flex-center" style="margin-bottom:16px;" onclick="addRule()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 自定义新规则
+                    </button>
+
+                    <div class="api-list" id="rulesList"></div>
+                </div>
             </div>
 
             <!-- 自定义模板编辑弹窗 -->
