@@ -186,14 +186,31 @@
 
         /* 悬浮菜单 & FAB按钮 */
         .fab-container { position: absolute; bottom: 20px; right: 20px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
-        .fab-menu { background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; width: 140px; transform-origin: bottom right; animation: popIn 0.2s ease-out; }
+        .fab-menu { background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; width: 130px; transform-origin: bottom right; animation: popIn 0.2s ease-out; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .fab-menu-item { background: transparent; border: none; padding: 14px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color); }
+        /* 缩小了文档编辑菜单的按钮尺寸和字体 */
+        .fab-menu-item { background: transparent; border: none; padding: 10px 14px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color); }
         .fab-menu-item:last-child { border-bottom: none; }
         .fab-menu-item:active { background: var(--input-bg); }
         .fab-btn { background: var(--btn-bg); color: #FFF; border: none; border-radius: 50%; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.2s; }
         .fab-btn:active { transform: scale(0.95); }
         .fab-btn svg { width: 24px; height: 24px; stroke-width: 2.5; }
+
+        /* 聊天室加号菜单 */
+        .plus-menu { position: absolute; bottom: 65px; left: 16px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; width: 120px; z-index: 30; transform-origin: bottom left; animation: popIn 0.2s ease-out; }
+        .plus-menu-item { background: transparent; border: none; padding: 14px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color); }
+        .plus-menu-item:last-child { border-bottom: none; }
+        .plus-menu-item:active { background: var(--input-bg); }
+        .plus-menu-item svg { width: 16px; height: 16px; stroke-width: 2; }
+
+        /* Switch 开关样式 (用于全局规则) */
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input:checked + .slider { background-color: var(--text-main); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .rule-item { display: flex; align-items: center; justify-content: space-between; background: #FAFAFA; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
 
         /* 模态框 (通用) */
         .modal-overlay {
@@ -343,27 +360,91 @@
                             返回
                         </button>
                         <div class="chat-header-title" id="chatRoomTitle">新建人设</div>
-                        <div style="width: 50px;"></div> <!-- 占位保持居中 -->
+                        <button class="icon-btn" onclick="openRoleplay()" title="角色扮演测试" style="background:var(--input-bg); color:var(--text-main); border-radius:10px; padding:6px 12px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:4px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> 扮演
+                        </button>
                     </div>
 
                     <div class="chat-box" id="chatBox"></div>
                     
                     <div class="chat-input-area">
-                        <input type="file" id="docUpload" accept=".txt,.pdf,.docx" style="display:none;" onchange="handleFileUpload(event)">
+                        <div class="plus-menu" id="plusMenu" style="display: none;">
+                            <button class="plus-menu-item" onclick="document.getElementById('docUpload').click()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                发送文档
+                            </button>
+                            <button class="plus-menu-item" onclick="document.getElementById('imgUpload').click()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                相册识图
+                            </button>
+                        </div>
+                        <input type="file" id="docUpload" accept=".txt,.pdf,.docx" style="display:none;" onchange="handleFileUpload(event, 'gen')">
+                        <input type="file" id="imgUpload" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 'gen')">
 
-                        <button class="action-circle-btn" onclick="document.getElementById('docUpload').click()" title="发送文件解析">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <button class="action-circle-btn" onclick="togglePlusMenu('plusMenu')" title="附加文件">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                         
-                        <textarea id="chatInput" placeholder="输入大纲... (回车发送)" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'" onkeydown="handleChatEnter(event)"></textarea>
+                        <textarea id="chatInput" placeholder="输入大纲... (回车发送)" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'" onkeydown="handleChatEnter(event, 'gen')"></textarea>
                         
-                        <button class="action-circle-btn" onclick="sendMessage()" title="发送文本/文件">
+                        <button class="action-circle-btn" onclick="sendMessage('gen')" title="发送消息">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                         </button>
                         
                         <button class="action-circle-btn primary" id="generateBtn" onclick="generateReply()" title="请求AI生成">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                         </button>
+                    </div>
+                </div>
+
+                <!-- 角色扮演界面 -->
+                <div id="roleplayRoomView" style="display: none; flex-direction: column; height: 100%;">
+                    <div class="chat-header">
+                        <button class="back-nav-btn" onclick="closeRoleplay()">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 返回
+                        </button>
+                        <div class="chat-header-title">扮演测试</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="icon-btn" onclick="openRpPersonaModal()" title="此处填写人设" style="background:var(--input-bg); color:var(--text-main); border-radius:10px; padding:6px 12px; font-size:13px; font-weight:600;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> 填人设
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="chat-box" id="rpChatBox"></div>
+                    
+                    <div class="chat-input-area">
+                        <div class="plus-menu" id="rpPlusMenu" style="display: none;">
+                            <button class="plus-menu-item" onclick="document.getElementById('rpImgUpload').click()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg> 发送图片
+                            </button>
+                        </div>
+                        <input type="file" id="rpImgUpload" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 'rp')">
+
+                        <button class="action-circle-btn" onclick="togglePlusMenu('rpPlusMenu')" title="附加">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                        
+                        <textarea id="rpChatInput" placeholder="和角色互动... (回车发送)" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'" onkeydown="handleChatEnter(event, 'rp')"></textarea>
+                        
+                        <button class="action-circle-btn" onclick="sendMessage('rp')" title="发送消息">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                        <button class="action-circle-btn primary" id="rpGenerateBtn" onclick="generateRpReply()" title="请求AI回复">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 填写人设模态框 -->
+            <div class="modal-overlay" id="rpPersonaModal">
+                <div class="modal-content" style="width: 90%; max-width: 450px;">
+                    <h3 class="modal-title">角色设定载入</h3>
+                    <textarea id="rpPersonaText" class="doc-editor-textarea" style="height: 250px;" placeholder="在此处粘贴刚刚生成的人设内容..."></textarea>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="document.getElementById('rpPersonaModal').style.display='none'">取消</button>
+                        <button class="btn-primary" onclick="saveRpPersona()">确认载入</button>
                     </div>
                 </div>
             </div>
@@ -393,7 +474,30 @@
                             </div>
                             <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>
+                        <button class="ios-menu-item" onclick="openSettingsSubView('rulesSubView'); renderRules();">
+                            <div class="menu-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                全局生成规则
+                            </div>
+                            <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
                     </div>
+                </div>
+
+                <!-- 全局规则子页面 -->
+                <div id="rulesSubView" style="display: none;">
+                    <button class="back-btn" onclick="backToSettingsMain()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 设置
+                    </button>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                        <h2 class="panel-title" style="margin:0;">全局避雷规则</h2>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="rulesToggle" onchange="toggleRules()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="api-list" id="rulesList"></div>
+                    <button class="btn-secondary" style="margin-top:16px;" onclick="addRule()">+ 新增自定义规则</button>
                 </div>
 
                 <!-- API 配置子页面 -->
@@ -804,9 +908,15 @@ relationship_with_user:
 </character>
 </info>`;
 
-        // 数据结构：多个人设会话
+        // 数据结构：多个人设会话与全局设置
         let chatSessions = JSON.parse(localStorage.getItem('chatSessions')) || [];
         let currentSessionId = null;
+
+        // 全局生成规则数据
+        let globalRules = JSON.parse(localStorage.getItem('globalRules')) || [
+            { id: 'rule_0', content: '人设禁止生成乙游男主的名字，名字禁止过于大众。' }
+        ];
+        let rulesEnabled = localStorage.getItem('rulesEnabled') !== 'false';
 
         // 模板系统数据
         let customTemplates = JSON.parse(localStorage.getItem('customTemplates')) || [];
@@ -820,24 +930,17 @@ relationship_with_user:
         let availableModels = JSON.parse(localStorage.getItem('availableModels')) || [];
         let activePresetId = localStorage.getItem('activePresetId') || '';
 
-        // 新增：Doc系统数据
         let savedDocs = JSON.parse(localStorage.getItem('savedDocs')) || [];
         let currentDocFilter = '全部';
 
         window.onload = () => {
             document.getElementById('activeUrl').value = currentApiUrl;
             document.getElementById('activeKey').value = currentApiKey;
-            if(availableModels.length > 0) {
-                renderModelSelect();
-            } else {
-                document.getElementById('manualModel').value = currentModel;
-            }
-            
+            if(availableModels.length > 0) { renderModelSelect(); } else { document.getElementById('manualModel').value = currentModel; }
             if(activePresetId) {
                 const pre = configPresets.find(p => p.id === activePresetId);
                 if(pre) document.getElementById('currentPresetName').innerText = pre.note || '未命名预设';
             }
-
             renderSessionList();
             renderLibrary();
             renderConfigPresets();
@@ -845,10 +948,8 @@ relationship_with_user:
         };
 
         function switchTab(tab) {
-            document.getElementById('tab-chat').classList.remove('active');
-            document.getElementById('tab-settings').classList.remove('active');
-            document.getElementById('tab-library').classList.remove('active');
-            document.getElementById('tab-docs').classList.remove('active');
+            document.querySelectorAll('.dock-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
             
             document.getElementById('chatView').style.display = 'none';
             document.getElementById('settingsView').style.display = 'none';
@@ -857,181 +958,89 @@ relationship_with_user:
             document.querySelector('.bottom-dock').style.display = 'flex'; 
 
             if (tab === 'chat') {
-                document.getElementById('tab-chat').classList.add('active');
                 document.getElementById('chatView').style.display = 'flex';
                 closeChatRoom(); 
+                closeRoleplay();
                 renderSessionList();
             } else if (tab === 'settings') {
-                document.getElementById('tab-settings').classList.add('active');
                 document.getElementById('settingsView').style.display = 'flex';
                 backToSettingsMain();
             } else if (tab === 'library') {
-                document.getElementById('tab-library').classList.add('active');
                 document.getElementById('libraryView').style.display = 'flex';
                 renderLibrary();
             } else if (tab === 'docs') {
-                document.getElementById('tab-docs').classList.add('active');
                 document.getElementById('docsView').style.display = 'flex';
                 closeDocEditor();
                 renderDocsList();
             }
         }
 
-        /* ======= 设置子系统 ======= */
+        /* ======= 设置子系统与规则 ======= */
         function openSettingsSubView(viewId) {
             document.getElementById('settingsMainMenu').style.display = 'none';
             document.getElementById('apiConfigSubView').style.display = 'none';
             document.getElementById('dataStorageSubView').style.display = 'none';
             document.getElementById('templateSubView').style.display = 'none';
+            document.getElementById('rulesSubView').style.display = 'none';
             document.getElementById(viewId).style.display = 'block';
         }
         function backToSettingsMain() {
             document.getElementById('apiConfigSubView').style.display = 'none';
             document.getElementById('dataStorageSubView').style.display = 'none';
             document.getElementById('templateSubView').style.display = 'none';
+            document.getElementById('rulesSubView').style.display = 'none';
             document.getElementById('settingsMainMenu').style.display = 'block';
         }
 
-        /* ======= 模板系统操作 ======= */
-        function renderTemplateView() {
-            const list = document.getElementById('templateList');
-            if(!list) return;
-            list.innerHTML = '';
-            
-            const defaultCard = document.createElement('div');
-            defaultCard.className = 'api-card';
-            defaultCard.innerHTML = `
-                <div class="api-card-header">
-                    <h4>内置模板（鸣曲相思逸原版）</h4>
-                    <span class="api-badge" style="background:var(--text-muted);">系统内置</span>
-                </div>
-                <div class="api-actions" style="margin-top:12px;">
-                    <button class="action-btn flex-center" onclick="applyTemplate('default')">
-                        ${activeTemplateId === 'default' ? '已应用当前' : '应用模板'}
-                    </button>
-                </div>
-            `;
-            list.appendChild(defaultCard);
+        function toggleRules() {
+            rulesEnabled = document.getElementById('rulesToggle').checked;
+            localStorage.setItem('rulesEnabled', rulesEnabled);
+        }
 
-            customTemplates.forEach(t => {
-                const card = document.createElement('div');
-                card.className = 'api-card';
-                card.innerHTML = `
-                    <div class="api-card-header">
-                        <h4>${t.name || '未命名模板'}</h4>
-                        <span class="api-badge" style="background:var(--btn-bg);">自定义</span>
-                    </div>
-                    <div class="api-actions" style="margin-top:12px;">
-                        <button class="action-btn flex-center" onclick="applyTemplate('${t.id}')">
-                            ${activeTemplateId === t.id ? '已应用当前' : '应用模板'}
-                        </button>
-                        <button class="action-btn flex-center" onclick="openTemplateEditor('${t.id}')">编辑</button>
-                        <button class="action-btn action-danger flex-center" onclick="deleteTemplate('${t.id}')">删除</button>
-                    </div>
+        function renderRules() {
+            document.getElementById('rulesToggle').checked = rulesEnabled;
+            const list = document.getElementById('rulesList');
+            list.innerHTML = '';
+            globalRules.forEach((r, idx) => {
+                const div = document.createElement('div');
+                div.className = 'rule-item';
+                div.innerHTML = `
+                    <div class="rule-text">${idx + 1}. ${r.content}</div>
+                    <button class="icon-btn" style="color:#FF3B30;" onclick="deleteRule('${r.id}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                 `;
-                list.appendChild(card);
+                list.appendChild(div);
             });
         }
-
-        function applyTemplate(id) {
-            activeTemplateId = id;
-            localStorage.setItem('activeTemplateId', activeTemplateId);
-            renderTemplateView();
-            alert('已成功切换！新对话的人设生成将使用该模板。');
+        
+        function addRule() {
+            const txt = prompt('请输入你要增加的生成规则/避雷点：');
+            if(!txt || !txt.trim()) return;
+            globalRules.push({ id: 'rule_' + Date.now(), content: txt.trim() });
+            localStorage.setItem('globalRules', JSON.stringify(globalRules));
+            renderRules();
         }
 
-        function openTemplateEditor(id) {
-            document.getElementById('templateModal').style.display = 'flex';
-            const nameInput = document.getElementById('tplName');
-            const contentInput = document.getElementById('tplContent');
-            const saveBtn = document.getElementById('saveTplBtn');
-            const idInput = document.getElementById('editingTplId');
-
-            if (!id) {
-                // 点击加号新建
-                document.getElementById('templateModalTitle').innerText = '新建自定义模板';
-                idInput.value = '';
-                nameInput.value = '';
-                contentInput.value = '<info>\n<character>\n该模板来源于鸣曲相思逸的人设生成器\n\n```yaml\n\n```\n</character>\n</info>';
-                nameInput.disabled = false;
-                contentInput.disabled = false;
-                saveBtn.style.display = 'block';
-            } else if (id === 'default') {
-                // 查看内置不可改
-                document.getElementById('templateModalTitle').innerText = '查看内置模板 (不可修改)';
-                idInput.value = 'default';
-                nameInput.value = '内置模板（鸣曲相思逸原版）';
-                contentInput.value = BUILTIN_TEMPLATE;
-                nameInput.disabled = true;
-                contentInput.disabled = true;
-                saveBtn.style.display = 'none';
-            } else {
-                // 编辑已有的自定义
-                document.getElementById('templateModalTitle').innerText = '编辑自定义模板';
-                const t = customTemplates.find(x => x.id === id);
-                idInput.value = t.id;
-                nameInput.value = t.name;
-                contentInput.value = t.content;
-                nameInput.disabled = false;
-                contentInput.disabled = false;
-                saveBtn.style.display = 'block';
-            }
+        function deleteRule(id) {
+            globalRules = globalRules.filter(r => r.id !== id);
+            localStorage.setItem('globalRules', JSON.stringify(globalRules));
+            renderRules();
         }
 
-        function closeTemplateEditor() {
-            document.getElementById('templateModal').style.display = 'none';
-        }
-
-        function saveTemplate() {
-            const id = document.getElementById('editingTplId').value;
-            const name = document.getElementById('tplName').value.trim();
-            const content = document.getElementById('tplContent').value.trim();
-
-            if (!name || !content) return alert('模板名称和内容不能为空！');
-
-            if (id && id !== 'default') {
-                const t = customTemplates.find(x => x.id === id);
-                if (t) {
-                    t.name = name;
-                    t.content = content;
-                }
-            } else {
-                const newId = 'tpl_' + Date.now();
-                customTemplates.push({ id: newId, name, content });
-            }
-            
-            localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
-            closeTemplateEditor();
-            renderTemplateView();
-        }
-
-        function deleteTemplate(id) {
-            if(id === 'default') return;
-            if(!confirm('确定要删除这个自定义模板吗？')) return;
-            customTemplates = customTemplates.filter(x => x.id !== id);
-            localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
-            if (activeTemplateId === id) {
-                activeTemplateId = 'default';
-                localStorage.setItem('activeTemplateId', activeTemplateId);
-            }
-            renderTemplateView();
-        }
-
-        /* ======= 数据储存统计 ======= */
+        /* ======= 聊天列表与房间 ======= */
         function renderSessionList() {
             const list = document.getElementById('sessionList');
             list.innerHTML = '';
             if(chatSessions.length === 0) {
-                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:14px;">空空如也，点击上方新建人设吧。</div>';
+                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:14px;">空空如也，点击上方新建吧。</div>';
                 return;
             }
             chatSessions.forEach(session => {
-                const visibleMsgCount = session.messages.filter(m => m.role !== 'system').length;
                 const div = document.createElement('div');
                 div.className = 'session-item';
                 div.innerHTML = `
                     <div class="session-title" onclick="openSession('${session.id}')">${session.title}</div>
-                    <div class="session-count" onclick="openSession('${session.id}')">${visibleMsgCount} 条对话</div>
                     <button class="session-delete" onclick="deleteSession('${session.id}')">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
@@ -1041,15 +1050,10 @@ relationship_with_user:
         }
 
         function createNewSession() {
-            let title = prompt("请输入这个人设的名字或标题：", "未命名人设");
+            let title = prompt("请输入设定的名字或标题：", "未命名人设");
             if(title === null) return;
             if(!title.trim()) title = "未命名人设";
-            
-            const newSession = {
-                id: Date.now().toString(),
-                title: title.trim(),
-                messages: [{ role: 'system', content: SYSTEM_PROMPT }]
-            };
+            const newSession = { id: Date.now().toString(), title: title.trim(), messages: [{ role: 'system', content: '' }] };
             chatSessions.unshift(newSession);
             localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
             openSession(newSession.id);
@@ -1058,9 +1062,9 @@ relationship_with_user:
         function openSession(id) {
             currentSessionId = id;
             document.getElementById('sessionListView').style.display = 'none';
+            document.getElementById('roleplayRoomView').style.display = 'none';
             document.getElementById('chatRoomView').style.display = 'flex';
-            document.querySelector('.bottom-dock').style.display = 'none'; // 进入聊天室自动隐藏底部栏
-            
+            document.querySelector('.bottom-dock').style.display = 'none'; 
             const session = chatSessions.find(s => s.id === id);
             document.getElementById('chatRoomTitle').innerText = session.title;
             renderChat();
@@ -1070,15 +1074,29 @@ relationship_with_user:
             currentSessionId = null;
             document.getElementById('chatRoomView').style.display = 'none';
             document.getElementById('sessionListView').style.display = 'block';
-            document.querySelector('.bottom-dock').style.display = 'flex'; // 离开聊天室恢复底部栏
+            document.querySelector('.bottom-dock').style.display = 'flex'; 
             renderSessionList();
         }
 
         function deleteSession(id) {
-            if(!confirm('确定要删除这个设定聊天吗？')) return;
+            if(!confirm('确定要删除这个聊天记录吗？')) return;
             chatSessions = chatSessions.filter(s => s.id !== id);
             localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
             renderSessionList();
+        }
+
+        /* ======= 渲染多模态消息框架 ======= */
+        function formatMsgContent(content) {
+            if (typeof content === 'string') return content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+            if (Array.isArray(content)) {
+                let html = '';
+                content.forEach(c => {
+                    if(c.type === 'text') html += c.text.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                    if(c.type === 'image_url') html += `<br><img src="${c.image_url.url}" style="max-width:100%; border-radius:12px; margin-top:8px;">`;
+                });
+                return html;
+            }
+            return '';
         }
 
         function renderChat() {
@@ -1086,9 +1104,8 @@ relationship_with_user:
             chatBox.innerHTML = '';
             const session = chatSessions.find(s => s.id === currentSessionId);
             if(!session) return;
-
             if(session.messages.length <= 1) {
-                chatBox.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:14px;">输入大纲开始生成吧！</div>';
+                chatBox.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:14px;">发送要求，开始设定吧！</div>';
                 return;
             }
 
@@ -1098,13 +1115,10 @@ relationship_with_user:
                 div.className = 'message ' + (msg.role === 'user' ? 'msg-user' : 'msg-ai');
                 
                 if (msg.role === 'user') {
-                    div.innerHTML = msg.content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                    div.innerHTML = formatMsgContent(msg.content);
                 } else {
-                    // 数据兼容：如果旧消息没有变体版本数组，就给它初始化一个
                     if(!msg.variants) { msg.variants = [msg.content]; msg.currentVariant = 0; }
-                    
-                    const contentHtml = msg.variants[msg.currentVariant].replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
-                    
+                    const contentHtml = formatMsgContent(msg.variants[msg.currentVariant]);
                     const footerHtml = `
                         <div class="msg-ai-footer">
                             <div class="variant-switch">
@@ -1116,12 +1130,10 @@ relationship_with_user:
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6" transform="rotate(180 12 12)"></polyline></svg>
                                 </button>
                             </div>
-                            <button class="regen-btn" id="regen_btn_${i}" onclick="regenerateReply(${i})">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-                                重回
+                            <button class="regen-btn" onclick="regenerateReply(${i})">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.29-10.45l5.08 5.08"></path></svg> 重回
                             </button>
-                        </div>
-                    `;
+                        </div>`;
                     div.innerHTML = `<div class="msg-content">${contentHtml}</div>${footerHtml}`;
                 }
                 chatBox.appendChild(div);
@@ -1129,84 +1141,168 @@ relationship_with_user:
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
         }
 
-        /* ======= 发送、生成与重回 ======= */
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
+        /* ======= 发送输入、重回、相册与文档解析 ======= */
+        function togglePlusMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+        }
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.action-circle-btn') && !e.target.closest('.plus-menu')) {
+                const m1 = document.getElementById('plusMenu');
+                const m2 = document.getElementById('rpPlusMenu');
+                if(m1) m1.style.display = 'none';
+                if(m2) m2.style.display = 'none';
+            }
+        });
+
+        function handleChatEnter(e, mode) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(mode);
+            }
+        }
+
+        function sendMessage(mode) {
+            const input = document.getElementById(mode === 'rp' ? 'rpChatInput' : 'chatInput');
             const text = input.value.trim();
             if (!text) return;
-            
             const session = chatSessions.find(s => s.id === currentSessionId);
-            session.messages.push({ role: 'user', content: text });
+            const msgObj = { role: 'user', content: text };
+            if(mode === 'rp') {
+                if(!session.rpMessages) session.rpMessages = [];
+                session.rpMessages.push(msgObj);
+                renderRpChat();
+            } else {
+                session.messages.push(msgObj);
+                renderChat();
+            }
             localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+            input.value = ''; input.style.height = '';
+        }
+
+        function handleImageUpload(event, mode) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const session = chatSessions.find(s => s.id === currentSessionId);
+                const msgObj = {
+                    role: 'user',
+                    content: [
+                        { type: "text", text: "[发送了一张图片，请进行识图分析]\n" },
+                        { type: "image_url", image_url: { url: e.target.result } }
+                    ]
+                };
+                if (mode === 'rp') {
+                    if(!session.rpMessages) session.rpMessages = [];
+                    session.rpMessages.push(msgObj);
+                    renderRpChat();
+                } else {
+                    session.messages.push(msgObj);
+                    renderChat();
+                }
+                localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+            const menu = document.getElementById(mode === 'rp' ? 'rpPlusMenu' : 'plusMenu');
+            if(menu) menu.style.display = 'none';
+        }
+
+        async function handleFileUpload(event, mode) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const menu = document.getElementById(mode === 'rp' ? 'rpPlusMenu' : 'plusMenu');
+            if(menu) menu.style.display = 'none';
+            const ext = file.name.split('.').pop().toLowerCase();
+            const inputArea = document.getElementById(mode === 'rp' ? 'rpChatInput' : 'chatInput');
+            const originalPlaceholder = inputArea.placeholder;
+            inputArea.placeholder = '解析文件中...';
+            inputArea.disabled = true;
             
-            input.value = '';
-            input.style.height = '';
-            renderChat();
+            try {
+                let textContent = '';
+                if (ext === 'txt') {
+                    textContent = await file.text();
+                } else if (ext === 'docx') {
+                    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js');
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+                    textContent = result.value;
+                } else if (ext === 'pdf') {
+                    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js');
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContentObj = await page.getTextContent();
+                        textContent += textContentObj.items.map(item => item.str).join(' ') + '\n';
+                    }
+                } else throw new Error('不支持的格式');
+                
+                if (textContent.trim()) {
+                    const session = chatSessions.find(s => s.id === currentSessionId);
+                    const msgObj = { role: 'user', content: `[收到文件: ${file.name}]\n\n${textContent.trim()}` };
+                    if(mode === 'rp') {
+                        if(!session.rpMessages) session.rpMessages = [];
+                        session.rpMessages.push(msgObj);
+                        renderRpChat();
+                    } else {
+                        session.messages.push(msgObj);
+                        renderChat();
+                    }
+                    localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+                } else alert('文件无可用文本内容。');
+            } catch (err) { alert('解析失败: ' + err.message); } 
+            finally {
+                inputArea.placeholder = originalPlaceholder;
+                inputArea.disabled = false;
+                event.target.value = '';
+            }
         }
 
         function buildSystemPrompt() {
-            let templateStr = '';
-            if (activeTemplateId === 'default') {
-                templateStr = BUILTIN_TEMPLATE;
-            } else {
-                const t = customTemplates.find(x => x.id === activeTemplateId);
-                templateStr = t ? t.content : BUILTIN_TEMPLATE;
-            }
-            return `你是一个顶级的小说/游戏角色设定师。请严格按照下方【模板结构】，根据用户发送的设定大纲/文档生成人设。排版请整洁，每个字段根据逻辑丰满扩写，没有提及的部分请自由发散填补。请原样保留模板中关于“该模板来源于鸣曲相思逸”的任何字样，并只输出填好的内容。\n\n【模板结构】：\n${templateStr}`;
+            let templateStr = activeTemplateId === 'default' ? BUILTIN_TEMPLATE : (customTemplates.find(x => x.id === activeTemplateId)?.content || BUILTIN_TEMPLATE);
+            let rulesText = (rulesEnabled && globalRules.length > 0) ? "\n\n【生成限制与避雷规则】：\n" + globalRules.map((r,i) => `${i+1}. ${r.content}`).join('\n') : '';
+            return `你是一个顶级的小说/游戏角色设定师。请严格按照下方【模板结构】，根据用户发送的内容生成人设。排版请整洁，没有提及的部分请发散填补。只输出填好的内容。${rulesText}\n\n【模板结构】：\n${templateStr}`;
         }
 
         async function generateReply() {
-            if (!currentApiUrl || !currentApiKey || !currentModel) {
-                return alert('请先在【设置】中填写 API 配置并拉取/填写模型！');
-            }
+            if (!currentApiUrl || !currentApiKey || !currentModel) return alert('请先配置 API！');
             const session = chatSessions.find(s => s.id === currentSessionId);
-            if(session.messages[session.messages.length-1].role !== 'user') {
-                return alert('请先发送你想说的大纲或要求，然后再点击生成。');
-            }
+            if(session.messages[session.messages.length-1].role !== 'user') return alert('请先发送大纲。');
 
             const genBtn = document.getElementById('generateBtn');
             genBtn.disabled = true; genBtn.style.opacity = '0.5';
 
-            const messagesToSend = JSON.parse(JSON.stringify(session.messages));
-            messagesToSend[0].content = buildSystemPrompt();
+            const msgsToSend = JSON.parse(JSON.stringify(session.messages));
+            msgsToSend[0].content = buildSystemPrompt();
 
             try {
                 const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
-                    body: JSON.stringify({ model: currentModel, messages: messagesToSend })
+                    body: JSON.stringify({ model: currentModel, messages: msgsToSend })
                 });
                 const data = await response.json();
                 if (data.error) throw new Error(data.error.message);
                 
-                let finalReply = data.choices[0].message.content;
-                
-                session.messages.push({ 
-                    role: 'assistant', 
-                    content: finalReply,
-                    variants: [finalReply],
-                    currentVariant: 0
-                });
+                session.messages.push({ role: 'assistant', content: data.choices[0].message.content, variants: [data.choices[0].message.content], currentVariant: 0 });
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderChat();
-            } catch (error) {
-                alert('生成失败，请检查网络或 API 配置。\n错误: ' + error.message);
-            } finally {
-                genBtn.disabled = false; genBtn.style.opacity = '1';
-            }
+            } catch (error) { alert('生成失败: ' + error.message); } 
+            finally { genBtn.disabled = false; genBtn.style.opacity = '1'; }
         }
 
         async function regenerateReply(index) {
-            if (!currentApiUrl || !currentApiKey || !currentModel) return alert('请先在【设置】中配置 API！');
+            if (!currentApiUrl || !currentApiKey || !currentModel) return alert('请先配置 API！');
             const session = chatSessions.find(s => s.id === currentSessionId);
             
             if (index < session.messages.length - 1) {
-                if(!confirm('重回生成将会删除此条消息之后的所有对话记录，确定继续吗？')) return;
+                if(!confirm('重回生成将删除之后的所有记录，确定继续吗？')) return;
                 session.messages.splice(index + 1);
             }
-
-            const regenBtn = document.getElementById('regen_btn_' + index);
-            if(regenBtn) { regenBtn.disabled = true; regenBtn.innerHTML = '思考中...'; }
 
             try {
                 const historyToSent = JSON.parse(JSON.stringify(session.messages.slice(0, index)));
@@ -1220,8 +1316,7 @@ relationship_with_user:
                 const data = await response.json();
                 if (data.error) throw new Error(data.error.message);
                 
-                let newReply = data.choices[0].message.content;
-
+                const newReply = data.choices[0].message.content;
                 const msg = session.messages[index];
                 msg.variants.push(newReply);
                 msg.currentVariant = msg.variants.length - 1;
@@ -1229,10 +1324,7 @@ relationship_with_user:
                 
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderChat();
-            } catch (error) {
-                alert('重回失败，请检查网络或 API 配置。\n错误: ' + error.message);
-                renderChat(); 
-            }
+            } catch (error) { alert('重回失败: ' + error.message); }
         }
 
         function switchVariant(msgIndex, delta) {
@@ -1246,6 +1338,78 @@ relationship_with_user:
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderChat();
             }
+        }
+
+        /* ======= 角色扮演系统 ======= */
+        function openRoleplay() {
+            document.getElementById('chatRoomView').style.display = 'none';
+            document.getElementById('roleplayRoomView').style.display = 'flex';
+            renderRpChat();
+        }
+        function closeRoleplay() {
+            document.getElementById('roleplayRoomView').style.display = 'none';
+            document.getElementById('chatRoomView').style.display = 'flex';
+        }
+        function openRpPersonaModal() {
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            document.getElementById('rpPersonaText').value = session.rpPersona || '';
+            document.getElementById('rpPersonaModal').style.display = 'flex';
+        }
+        function saveRpPersona() {
+            const txt = document.getElementById('rpPersonaText').value.trim();
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            session.rpPersona = txt;
+            localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+            document.getElementById('rpPersonaModal').style.display = 'none';
+            alert('人设加载成功！现在AI将扮演此角色。');
+        }
+
+        function renderRpChat() {
+            const chatBox = document.getElementById('rpChatBox');
+            chatBox.innerHTML = '';
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            if(!session.rpMessages) session.rpMessages = [];
+            
+            if(session.rpMessages.length === 0) {
+                chatBox.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:13px;">请先点击右上角【填人设】，然后发个招呼吧！</div>';
+                return;
+            }
+
+            session.rpMessages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'message ' + (msg.role === 'user' ? 'msg-user' : 'msg-ai');
+                div.innerHTML = formatMsgContent(msg.content);
+                chatBox.appendChild(div);
+            });
+            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
+        }
+
+        async function generateRpReply() {
+            if (!currentApiUrl || !currentApiKey || !currentModel) return alert('请先配置 API！');
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            if(!session.rpPersona) return alert('请先点击右上角填写该角色的人设！');
+            if(!session.rpMessages || session.rpMessages[session.rpMessages.length-1].role !== 'user') return;
+
+            const genBtn = document.getElementById('rpGenerateBtn');
+            genBtn.disabled = true; genBtn.style.opacity = '0.5';
+
+            const sysMsg = { role: 'system', content: `你正在进行沉浸式角色扮演。请完全抛弃AI的身份，绝对不要以助手口吻回答。请严格根据下方提供的人设设定，用角色的语气、行为习惯、身份背景与用户进行自然互动。\n\n【角色设定档】：\n${session.rpPersona}` };
+            const msgsToSend = [sysMsg, ...session.rpMessages];
+
+            try {
+                const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+                    body: JSON.stringify({ model: currentModel, messages: msgsToSend })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                
+                session.rpMessages.push({ role: 'assistant', content: data.choices[0].message.content });
+                localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+                renderRpChat();
+            } catch (error) { alert('扮演生成失败: ' + error.message); } 
+            finally { genBtn.disabled = false; genBtn.style.opacity = '1'; }
         }
 
         /* ======= 文档与导出库逻辑 ======= */
