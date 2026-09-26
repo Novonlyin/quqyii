@@ -334,12 +334,53 @@
         .badge-drama { background: #FFEBEA; color: #FF3B30; }
         .badge-public { background: #E4F1E9; color: #34C759; }
         .badge-paid { background: #EAF2FF; color: #007AFF; }
+        
+        /* 新增：登录欢迎页专属 UI */
+        .landing-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; padding: 40px 24px; text-align: center; box-sizing: border-box; background: var(--bg-color); z-index: 50; position: absolute; inset: 0; }
+        .landing-logo { width: 72px; height: 72px; background: var(--btn-bg); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #FFF; margin-bottom: 20px; box-shadow: 0 10px 24px rgba(0,0,0,0.1); }
+        .landing-logo svg { width: 36px; height: 36px; stroke-width: 2; }
+        .landing-title { font-size: 24px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px; }
+        .landing-subtitle { font-size: 14px; color: var(--text-muted); margin: 0 0 24px 0; line-height: 1.5; font-weight: 500; }
+        .landing-disclaimer { flex: 1; background: #FFF; border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; font-size: 13px; color: var(--text-muted); text-align: left; overflow-y: auto; margin-bottom: 24px; width: 100%; box-shadow: inset 0 2px 10px rgba(0,0,0,0.02); line-height: 1.6; }
+        .landing-footer { font-size: 12px; color: var(--text-muted); margin-top: 24px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+        
+        /* 新增：聊天系统时间旁白与气泡底标 */
+        .chat-sys-time { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-muted); margin: 24px 0 12px 0; opacity: 0.8; }
+        .bubble-time { font-size: 10px; color: rgba(0,0,0,0.3); margin-top: 6px; display: block; text-align: right; }
+        .msg-user .bubble-time { color: rgba(255,255,255,0.7); }
+        .msg-content { width: 100%; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        <div class="view-content">
+        
+        <!-- 登录与免责声明落地页 -->
+        <div class="landing-container" id="landingView">
+            <div class="landing-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <h1 class="landing-title">AI 人设生成器</h1>
+            <p class="landing-subtitle">私密、极简、专注的定制化设定创作空间</p>
+            
+            <div class="landing-disclaimer">
+                <strong style="color: var(--text-main); font-size: 15px; display: block; margin-bottom: 12px; text-align: center;">免责声明与使用规范</strong>
+                本工具为本地化运行的极简辅助生成器，所有的配置参数、设定文档及对话记录均<span style="color: var(--text-main); font-weight: 600;">完全独立存储于您的本地设备缓存中</span>，系统绝对不会抓取、收集或上传任何隐私数据至云端服务器。<br><br>
+                AI 的文字输出基于大语言模型概率推理生成，具有极强的不可预测性与随机性，且完全不代表本程序的立场、观点或价值观。请务必在严格遵守您所在地国家法律法规的前提下进行合规创作。<br><br>
+                <span style="color: #FF3B30; font-weight: 600;">⚠️ 违规禁止行为：</span><br>
+                严禁利用本工具刻意引导或生成任何涉黄、涉政、暴力血腥，以及侵犯他人名誉权、隐私权、著作权等违规违法内容。因使用者主动恶意诱导、不当传播或滥用工具引发的一切社会纠纷及现实法律后果，<span style="color: #FF3B30; font-weight: 600;">完全由使用者个人承担全部责任</span>。<br><br>
+                点击下方按钮进入本程序，即表示您已充分阅读、完全理解并无条件同意本免责声明的所有条款。
+            </div>
+
+            <button class="btn-primary flex-center" style="padding: 16px; font-size: 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);" onclick="enterApp()">
+                同意声明，进入生成器 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+            <div class="landing-footer">
+                © 原创作者：@鸣曲相思逸
+            </div>
+        </div>
+
+        <div class="view-content" id="mainViewContent" style="display: none;">
             
             <!-- 视图一：聊天列表 & 生成器 -->
             <div id="chatView" style="display: flex; flex-direction: column; height: 100%;">
@@ -964,6 +1005,13 @@ relationship_with_user:
         let savedDocs = JSON.parse(localStorage.getItem('savedDocs')) || [];
         let currentDocFilter = '全部';
 
+        // 时间格式化辅助模块
+        function getNowString() {
+            const d = new Date();
+            const pad = n => (n < 10 ? '0' + n : n);
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
         window.onload = () => {
             document.getElementById('activeUrl').value = currentApiUrl;
             document.getElementById('activeKey').value = currentApiKey;
@@ -982,7 +1030,18 @@ relationship_with_user:
             renderLibrary();
             renderConfigPresets();
             renderDocsList();
+
+            // 初始拦截，显示登录界面，隐藏主功能区
+            document.getElementById('mainViewContent').style.display = 'none';
+            document.querySelector('.bottom-dock').style.display = 'none';
         };
+
+        function enterApp() {
+            document.getElementById('landingView').style.display = 'none';
+            document.getElementById('mainViewContent').style.display = 'block';
+            document.querySelector('.bottom-dock').style.display = 'flex';
+            switchTab('chat');
+        }
 
         function switchTab(tab) {
             document.getElementById('tab-chat').classList.remove('active');
@@ -1184,10 +1243,12 @@ relationship_with_user:
             if(title === null) return;
             if(!title.trim()) title = "未命名人设";
             
+            const nowStr = getNowString();
             const newSession = {
                 id: Date.now().toString(),
                 title: title.trim(),
-                messages: [{ role: 'system', content: SYSTEM_PROMPT }]
+                createdAt: nowStr,
+                messages: [{ role: 'system', content: SYSTEM_PROMPT, timestamp: nowStr }]
             };
             chatSessions.unshift(newSession);
             localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
@@ -1228,13 +1289,35 @@ relationship_with_user:
             const session = chatSessions.find(s => s.id === currentSessionId);
             if(!session) return;
 
+            // 兼容补充旧数据的创建时间
+            if (!session.createdAt) session.createdAt = getNowString();
+
+            // 顶部专属时间旁白
+            chatBox.innerHTML = `<div class="chat-sys-time">—— 人设室建立于 ${session.createdAt} ——</div>`;
+
             if(session.messages.length <= 1) {
-                chatBox.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:14px;">输入大纲开始生成吧！</div>';
+                chatBox.innerHTML += '<div style="text-align:center; color:var(--text-muted); margin-top: 40px; font-size:14px;">准备就绪，开始发送角色的要求与大纲吧！</div>';
                 return;
             }
 
+            let lastDate = session.createdAt.split(' ')[0];
+
             for (let i = 1; i < session.messages.length; i++) {
                 const msg = session.messages[i];
+                if (!msg.timestamp) msg.timestamp = getNowString();
+                
+                const msgDate = msg.timestamp.split(' ')[0];
+                const msgTime = msg.timestamp.split(' ')[1];
+
+                // 穿插系统旁白提示跨天日期
+                if (msgDate !== lastDate) {
+                    const sysTime = document.createElement('div');
+                    sysTime.className = 'chat-sys-time';
+                    sysTime.innerText = `—— ${msgDate} ——`;
+                    chatBox.appendChild(sysTime);
+                    lastDate = msgDate;
+                }
+
                 const div = document.createElement('div');
                 div.className = 'message ' + (msg.role === 'user' ? 'msg-user' : 'msg-ai');
                 
@@ -1249,10 +1332,9 @@ relationship_with_user:
                     } else {
                         textContent = msg.content;
                     }
-                    div.innerHTML = textContent.replace(/\\n/g, '<br>').replace(/\n/g, '<br>') + imageContent;
+                    div.innerHTML = `<div class="msg-content">${textContent.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}${imageContent}</div><div class="bubble-time">${msgTime}</div>`;
                 } else {
                     if(!msg.variants) { msg.variants = [msg.content]; msg.currentVariant = 0; }
-                    
                     const contentHtml = msg.variants[msg.currentVariant].replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
                     
                     const footerHtml = `
@@ -1272,7 +1354,7 @@ relationship_with_user:
                             </button>
                         </div>
                     `;
-                    div.innerHTML = `<div class="msg-content">${contentHtml}</div>${footerHtml}`;
+                    div.innerHTML = `<div class="msg-content">${contentHtml}</div><div class="bubble-time">${msgTime}</div>${footerHtml}`;
                 }
                 chatBox.appendChild(div);
             }
@@ -1304,7 +1386,8 @@ relationship_with_user:
                     content: [
                         { type: 'text', text: '[发送了一张图片]' },
                         { type: 'image_url', image_url: { url: base64Img } }
-                    ]
+                    ],
+                    timestamp: getNowString()
                 });
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderChat();
@@ -1326,7 +1409,7 @@ relationship_with_user:
             if (!text) return;
             
             const session = chatSessions.find(s => s.id === currentSessionId);
-            session.messages.push({ role: 'user', content: text });
+            session.messages.push({ role: 'user', content: text, timestamp: getNowString() });
             localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
             
             input.value = '';
@@ -1358,7 +1441,7 @@ relationship_with_user:
             }
             const session = chatSessions.find(s => s.id === currentSessionId);
             if(session.messages[session.messages.length-1].role !== 'user') {
-                return alert('请先发送你想说的大纲/要求/附件，然后再点击生成。');
+                return alert('请先发送你想说的大纲或要求，然后再点击生成。');
             }
 
             const genBtn = document.getElementById('generateBtn');
@@ -1366,6 +1449,9 @@ relationship_with_user:
 
             const messagesToSend = JSON.parse(JSON.stringify(session.messages));
             messagesToSend[0].content = buildSystemPrompt();
+            
+            // 剔除给大模型的无用内部字段（防止报错）
+            messagesToSend.forEach(msg => { delete msg.timestamp; delete msg.variants; delete msg.currentVariant; });
 
             try {
                 const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
@@ -1382,7 +1468,8 @@ relationship_with_user:
                     role: 'assistant', 
                     content: finalReply,
                     variants: [finalReply],
-                    currentVariant: 0
+                    currentVariant: 0,
+                    timestamp: getNowString()
                 });
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderChat();
@@ -1408,6 +1495,7 @@ relationship_with_user:
             try {
                 const historyToSent = JSON.parse(JSON.stringify(session.messages.slice(0, index)));
                 historyToSent[0].content = buildSystemPrompt();
+                historyToSent.forEach(msg => { delete msg.timestamp; delete msg.variants; delete msg.currentVariant; });
 
                 const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
                     method: 'POST',
@@ -1423,6 +1511,7 @@ relationship_with_user:
                 msg.variants.push(newReply);
                 msg.currentVariant = msg.variants.length - 1;
                 msg.content = newReply;
+                msg.timestamp = getNowString(); // 更新重回的系统时间
                 
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderChat();
