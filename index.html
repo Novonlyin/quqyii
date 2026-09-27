@@ -349,6 +349,13 @@
         .bubble-time { font-size: 10px; color: rgba(0,0,0,0.3); margin-top: 6px; display: block; text-align: right; }
         .msg-user .bubble-time { color: rgba(255,255,255,0.7); }
         .msg-content { width: 100%; }
+
+        /* 新增：登录界面的勾选框与批量操作栏 */
+        .landing-checkbox-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 100%; text-align: left; background: #FFF; padding: 16px; border-radius: 16px; border: 1px solid var(--border-color); }
+        .landing-checkbox-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-main); font-weight: 500; cursor: pointer; }
+        .landing-checkbox-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--text-main); cursor: pointer; }
+        .batch-action-bar { display: flex; justify-content: space-between; align-items: center; background: #FFF; padding: 12px 16px; border-radius: 12px; margin-top: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.03); animation: popIn 0.2s ease-out; }
+        .doc-checkbox { width: 20px; height: 20px; accent-color: var(--text-main); margin-right: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -363,7 +370,7 @@
             <h1 class="landing-title">AI 人设生成器</h1>
             <p class="landing-subtitle">私密、极简、专注的定制化设定创作空间</p>
             
-            <div class="landing-disclaimer">
+            <div class="landing-disclaimer" id="disclaimerBox">
                 <h3 style="color: var(--text-main); font-size: 16px; font-weight: 700; margin: 0 0 16px 0; text-align: center; letter-spacing: 0.5px;">—— 免责声明与使用规范 ——</h3>
                 
                 <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.6;">
@@ -388,13 +395,25 @@
                         因本工具为纯粹的无偿分享，且原作者属性为纯 BG（男女向）。为避免产生不必要的冲突与不快，<b>在此礼貌婉拒反 BG、雷 BG、讨厌乙女向，或曾对 BG/乙女向群体及相关作品有过攻击、辱骂行为的用户使用本工具</b>；同时，严禁使用本工具生成任何反 BG、反乙女向，或对上述受众抱有恶意的负面内容。互联网广袤，有许多其他优秀的辅助工具供您挑选，感谢您的理解与配合。
                     </div>
                     <div style="margin-top: 10px; text-align: center; color: var(--text-main); font-weight: 600; padding-top: 14px; border-top: 1px solid var(--border-color);">
-                        点击下方按钮进入本程序，即代表您已充分阅读并无条件同意以上全部条款。
+                        首次使用，请您务必滑到底部并阅读完毕后勾选下方协议。
                     </div>
                 </div>
             </div>
 
-            <button class="btn-primary flex-center" style="padding: 16px; font-size: 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);" onclick="enterApp()">
-                同意声明，进入生成器 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            <div id="landingCheckboxes" class="landing-checkbox-group" style="display: none;">
+                <label class="landing-checkbox-item">
+                    <input type="checkbox" id="chk1" onchange="checkDisclaimerConditions()"> 我已满18岁，具备完全民事行为能力
+                </label>
+                <label class="landing-checkbox-item" id="chk2Label" style="opacity: 0.5;">
+                    <input type="checkbox" id="chk2" onchange="checkDisclaimerConditions()" disabled> 我已滑到底部，仔细阅读免责声明全部内容
+                </label>
+                <label class="landing-checkbox-item">
+                    <input type="checkbox" id="chk3" onchange="checkDisclaimerConditions()"> 我自愿同意并承诺遵守全部条款与规范
+                </label>
+            </div>
+
+            <button class="btn-primary flex-center" id="enterAppBtn" style="padding: 16px; font-size: 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);" onclick="enterApp()">
+                进入生成器 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </button>
             <div class="landing-footer">
                 © 原创作者：@鸣曲相思逸
@@ -777,7 +796,21 @@
                 
                 <!-- 文档列表库 -->
                 <div id="docsListView" style="padding: 20px 16px; display: block; height: 100%; box-sizing: border-box; position: relative;">
-                    <h2 class="panel-title">文档与导出库</h2>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h2 class="panel-title" style="margin:0;">文档与导出库</h2>
+                        <button class="icon-btn" onclick="toggleDocMultiSelect()" style="color:var(--text-main); background:var(--input-bg); padding:6px 12px; border-radius:10px; font-size:13px; font-weight:600;">
+                            多选
+                        </button>
+                    </div>
+
+                    <div id="batchActionBar" class="batch-action-bar" style="display:none;">
+                        <span style="font-size:13px; font-weight:600; color:var(--text-main);" id="batchCountText">已选 0 项</span>
+                        <div style="display:flex; gap:8px;">
+                            <button class="action-btn flex-center" style="padding:6px 12px; background: #EAF2FF; color: #007AFF;" onclick="batchExportDocs()">打包 ZIP</button>
+                            <button class="action-btn flex-center" style="padding:6px 12px; background: #FFEBEA; color: #FF3B30;" onclick="batchDeleteDocs()">批量删除</button>
+                        </div>
+                    </div>
+
                     <div class="search-bar">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         <input type="text" id="docSearchInput" placeholder="搜索文档标题..." oninput="renderDocsList()">
@@ -1033,6 +1066,12 @@ relationship_with_user:
             return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
         }
 
+        // 首登校验系统
+        let hasAgreedDisclaimer = localStorage.getItem('hasAgreedDisclaimer') === 'true';
+        let loginTimerInt;
+        let loginTimeLeft = 20;
+        let isScrolledToBottom = false;
+
         window.onload = () => {
             document.getElementById('activeUrl').value = currentApiUrl;
             document.getElementById('activeKey').value = currentApiKey;
@@ -1052,12 +1091,72 @@ relationship_with_user:
             renderConfigPresets();
             renderDocsList();
 
-            // 初始拦截，显示登录界面，隐藏主功能区
-            document.getElementById('mainViewContent').style.display = 'none';
-            document.querySelector('.bottom-dock').style.display = 'none';
+            if (!hasAgreedDisclaimer) {
+                document.getElementById('mainViewContent').style.display = 'none';
+                document.querySelector('.bottom-dock').style.display = 'none';
+                document.getElementById('landingView').style.display = 'flex';
+                initDisclaimerTimer();
+            } else {
+                // 非首次登录直接进入
+                document.getElementById('landingView').style.display = 'none';
+                document.getElementById('mainViewContent').style.display = 'block';
+                document.querySelector('.bottom-dock').style.display = 'flex';
+                switchTab('chat');
+            }
         };
 
+        function initDisclaimerTimer() {
+            const btn = document.getElementById('enterAppBtn');
+            const box = document.getElementById('disclaimerBox');
+            document.getElementById('landingCheckboxes').style.display = 'flex';
+            
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.innerHTML = `请仔细阅读免责声明 (${loginTimeLeft}s)`;
+
+            // 监听滑到底部
+            if(box) {
+                box.addEventListener('scroll', () => {
+                    if (box.scrollTop + box.clientHeight >= box.scrollHeight - 20) {
+                        isScrolledToBottom = true;
+                        document.getElementById('chk2').disabled = false;
+                        document.getElementById('chk2Label').style.opacity = '1';
+                        checkDisclaimerConditions();
+                    }
+                });
+            }
+
+            loginTimerInt = setInterval(() => {
+                loginTimeLeft--;
+                if (loginTimeLeft > 0) {
+                    btn.innerHTML = `请仔细阅读免责声明 (${loginTimeLeft}s)`;
+                } else {
+                    clearInterval(loginTimerInt);
+                    checkDisclaimerConditions();
+                }
+            }, 1000);
+        }
+
+        function checkDisclaimerConditions() {
+            if (loginTimeLeft > 0) return;
+            const cb1 = document.getElementById('chk1').checked;
+            const cb2 = document.getElementById('chk2').checked;
+            const cb3 = document.getElementById('chk3').checked;
+            const btn = document.getElementById('enterAppBtn');
+
+            if (cb1 && cb2 && cb3 && isScrolledToBottom) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerHTML = `同意声明，进入生成器 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.innerHTML = `需滑到底部并勾选全部协议`;
+            }
+        }
+
         function enterApp() {
+            localStorage.setItem('hasAgreedDisclaimer', 'true');
             document.getElementById('landingView').style.display = 'none';
             document.getElementById('mainViewContent').style.display = 'block';
             document.querySelector('.bottom-dock').style.display = 'flex';
@@ -1768,6 +1867,9 @@ relationship_with_user:
         }
 
         /* ======= 文档与导出库逻辑 ======= */
+        let isDocMultiSelectMode = false;
+        let selectedDocIds = new Set();
+
         function toggleDocFab() {
             const menu = document.getElementById('docFabMenu');
             menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
@@ -1783,6 +1885,48 @@ relationship_with_user:
         function setDocFilter(filter) {
             currentDocFilter = filter;
             renderDocsList();
+        }
+
+        function toggleDocMultiSelect() {
+            isDocMultiSelectMode = !isDocMultiSelectMode;
+            selectedDocIds.clear();
+            document.getElementById('batchActionBar').style.display = isDocMultiSelectMode ? 'flex' : 'none';
+            renderDocsList();
+        }
+
+        function toggleDocSelection(id) {
+            if (selectedDocIds.has(id)) selectedDocIds.delete(id);
+            else selectedDocIds.add(id);
+            document.getElementById('batchCountText').innerText = `已选 ${selectedDocIds.size} 项`;
+        }
+
+        async function batchExportDocs() {
+            if (selectedDocIds.size === 0) return alert('请先勾选需要打包的文档');
+            const docsToExport = savedDocs.filter(d => selectedDocIds.has(d.id));
+            
+            document.getElementById('batchCountText').innerText = '压缩打包中...';
+            try {
+                await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+                const zip = new JSZip();
+                docsToExport.forEach(d => {
+                    const fname = (d.title || '未命名').replace(/[\\/:*?"<>|]/g, "_");
+                    zip.file(`${fname}.txt`, d.content);
+                });
+                const content = await zip.generateAsync({type:"blob"});
+                downloadDataFile(content, '打包导出文档.zip', 'application/zip');
+                toggleDocMultiSelect();
+            } catch(e) {
+                alert('打包导出失败: ' + e.message);
+                document.getElementById('batchCountText').innerText = `已选 ${selectedDocIds.size} 项`;
+            }
+        }
+
+        function batchDeleteDocs() {
+            if (selectedDocIds.size === 0) return alert('请先勾选需要删除的文档');
+            if(!confirm(`确定要彻底删除选中的 ${selectedDocIds.size} 个文档吗？`)) return;
+            savedDocs = savedDocs.filter(d => !selectedDocIds.has(d.id));
+            localStorage.setItem('savedDocs', JSON.stringify(savedDocs));
+            toggleDocMultiSelect(); 
         }
 
         function renderDocsList() {
@@ -1814,13 +1958,25 @@ relationship_with_user:
             filtered.forEach(d => {
                 const card = document.createElement('div');
                 card.className = 'api-card';
+                
+                // 旧数据兼容：将旧的单 date 转为创建和编辑双时间戳
+                let createStr = d.createdAt || d.date || '未知时间';
+                let updateStr = d.updatedAt || d.date || '未知时间';
+
+                let checkboxHtml = '';
+                if (isDocMultiSelectMode) {
+                    checkboxHtml = `<input type="checkbox" class="doc-checkbox" ${selectedDocIds.has(d.id)?'checked':''} onclick="toggleDocSelection('${d.id}')">`;
+                }
+
                 card.innerHTML = `
-                    <div class="api-card-header">
-                        <h4 style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70%;">${d.title || '未命名文档'}</h4>
+                    <div class="api-card-header" style="justify-content: flex-start;">
+                        ${checkboxHtml}
+                        <h4 style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%; margin-right:auto;">${d.title || '未命名文档'}</h4>
                         <span class="api-badge" style="background:var(--text-muted);">${d.category || '未分类'}</span>
                     </div>
-                    <div class="api-note" style="margin-bottom:12px;">最后修改: ${d.date || '未知'}</div>
-                    <div class="api-actions">
+                    <div class="api-note" style="margin-bottom:4px;">最初建立: ${createStr}</div>
+                    <div class="api-note" style="margin-bottom:12px;">最后修改: ${updateStr}</div>
+                    <div class="api-actions" style="${isDocMultiSelectMode ? 'display:none;' : ''}">
                         <button class="action-btn flex-center" onclick="openDoc('${d.id}')">编辑</button>
                         <button class="action-btn action-danger flex-center" onclick="deleteDoc('${d.id}')">删除</button>
                     </div>
@@ -1832,8 +1988,8 @@ relationship_with_user:
         function createNewDoc() {
             document.getElementById('docFabMenu').style.display = 'none';
             const newId = 'doc_' + Date.now();
-            const dateStr = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
-            savedDocs.unshift({ id: newId, title: '新建文档', category: '未分类', content: '', date: dateStr });
+            const dateStr = getNowString();
+            savedDocs.unshift({ id: newId, title: '新建文档', category: '未分类', content: '', createdAt: dateStr, updatedAt: dateStr });
             localStorage.setItem('savedDocs', JSON.stringify(savedDocs));
             openDoc(newId);
         }
@@ -1868,10 +2024,10 @@ relationship_with_user:
                 }
                 
                 const newId = 'doc_' + Date.now();
-                const dateStr = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+                const dateStr = getNowString();
                 let cleanTitle = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
                 
-                savedDocs.unshift({ id: newId, title: cleanTitle, category: '导入文件', content: textContent, date: dateStr });
+                savedDocs.unshift({ id: newId, title: cleanTitle, category: '导入文件', content: textContent, createdAt: dateStr, updatedAt: dateStr });
                 localStorage.setItem('savedDocs', JSON.stringify(savedDocs));
                 openDoc(newId);
                 alert('文件导入成功，可继续编辑！');
@@ -1918,7 +2074,9 @@ relationship_with_user:
                 doc.title = document.getElementById('docEditTitle').value.trim() || '未命名文档';
                 doc.category = document.getElementById('docEditCategory').value.trim() || '未分类';
                 doc.content = document.getElementById('docEditContent').value;
-                doc.date = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+                doc.updatedAt = getNowString();
+                // 补充旧数据
+                if(!doc.createdAt && doc.date) doc.createdAt = doc.date;
                 localStorage.setItem('savedDocs', JSON.stringify(savedDocs));
             }
         }
@@ -1950,7 +2108,8 @@ relationship_with_user:
             } else if (format === 'docx') {
                 const formattedContent = doc.content.replace(/\n/g, '<br>');
                 const htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${filename}</title></head><body style="font-family: 'Microsoft YaHei', sans-serif; line-height: 1.6;">${formattedContent}</body></html>`;
-                downloadDataFile(htmlContent, `${filename}.doc`, 'application/msword;charset=utf-8');
+                // 此处严格改为 .docx 后缀导出
+                downloadDataFile(htmlContent, `${filename}.docx`, 'application/msword;charset=utf-8');
             } else if (format === 'pdf') {
                 const printWin = window.open('', '', 'width=800,height=600');
                 printWin.document.write(`<html><head><title>${filename}</title></head><body style="font-family: sans-serif; line-height: 1.6; white-space: pre-wrap; padding: 40px;">${doc.content}</body></html>`);
