@@ -552,6 +552,45 @@
                             <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>
                     </div>
+
+                    <!-- 底部版本信息与免责声明入口 -->
+                    <div style="text-align: center; margin-top: 24px; font-size: 13px; color: var(--text-muted); font-weight: 500;">
+                        <span>v1.0.0 版本</span>
+                        <span style="margin: 0 8px;">|</span>
+                        <span style="color: #007AFF; cursor: pointer;" onclick="document.getElementById('settingDisclaimerModal').style.display='flex'">免责声明</span>
+                    </div>
+                </div>
+
+                <!-- 设置界面的免责声明弹窗 -->
+                <div class="modal-overlay" id="settingDisclaimerModal">
+                    <div class="modal-content" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
+                        <h3 class="modal-title" style="margin-bottom: 12px; font-size: 16px;">—— 免责声明与使用规范 ——</h3>
+                        <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.6; color: var(--text-muted); text-align: left;">
+                            <div>
+                                <strong style="color: var(--text-main);">1. 数据安全与本地存储：</strong><br>
+                                本工具为纯前端运行的本地化页面，您的所有配置、设定及对话记录均完全独立存储于您的本地设备中，绝不上传至任何云端。<b>敬请注意：由于浏览器清理缓存等不确定因素极易导致数据随机丢失，请您务必养成“勤导出、勤保存”的良好习惯，及时备份您的心血之作。</b>
+                            </div>
+                            <div>
+                                <strong style="color: #FF3B30;">2. 违规禁止与完全免责：</strong><br>
+                                严禁利用本工具刻意引导或生成任何涉黄、涉政、暴力血腥及侵犯他人权利等违规违法内容。您利用本工具生成的所有内容及由此做出的任何行为，<b>均由您（使用者本人）自行承担全部的现实与法律责任</b>。使用者的任何行为均与原作者（@鸣曲相思逸）无关，原作者对此免于承担任何连带责任。
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-main);">3. 尊重原创与禁止牟利：</strong><br>
+                                本工具由原作者无偿公开分享，请大家尊重原创精神，严禁抄袭他人既有的作品与设定。未经原作者允许，<b>严禁对本工具进行任何形式的二传、二贩及私自二改</b>。绝对禁止使用本工具进行任何商业牟利行为（包括但不限于将本工具生成的人设文案进行有偿出售）。
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-main);">4. 未成年人使用限制：</strong><br>
+                                本网站默认使用者为已满 18 周岁的成年人，未满 18 周岁请勿使用本工具。若未成年人擅自使用，由此引发的任何争议、心理影响及法律后果，均由未成年人及其法定监护人自行承担全部责任。
+                            </div>
+                            <div>
+                                <strong style="color: var(--text-main);">5. 特定立场婉拒说明：</strong><br>
+                                因本工具为纯粹的无偿分享，且原作者属性为纯 BG（男女向）。为避免产生不必要的冲突与不快，<b>在此礼貌婉拒反 BG、雷 BG、讨厌乙女向，或曾对 BG/乙女向群体及相关作品有过攻击、辱骂行为的用户使用本工具</b>；同时，严禁使用本工具生成任何反 BG、反乙女向，或对上述受众抱有恶意的负面内容。互联网广袤，有许多其他优秀的辅助工具供您挑选，感谢您的理解与配合。
+                            </div>
+                        </div>
+                        <div class="modal-actions" style="margin-top: 16px;">
+                            <button class="btn-primary" onclick="document.getElementById('settingDisclaimerModal').style.display='none'">已知悉并关闭</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- API 配置子页面 -->
