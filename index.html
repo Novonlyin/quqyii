@@ -356,6 +356,20 @@
         .landing-checkbox-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--text-main); cursor: pointer; }
         .batch-action-bar { display: flex; justify-content: space-between; align-items: center; background: #FFF; padding: 12px 16px; border-radius: 12px; margin-top: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.03); animation: popIn 0.2s ease-out; }
         .doc-checkbox { width: 20px; height: 20px; accent-color: var(--text-main); margin-right: 12px; cursor: pointer; }
+
+        /* 新增：正在输入中动画 */
+        .typing-bubble { align-self: flex-start; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; padding: 4px 16px; margin-bottom: 8px; }
+        .typing-dot { width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typingBounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* 新增：气泡长按菜单 */
+        .context-menu { position: fixed; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 1000; display: none; flex-direction: column; overflow: hidden; width: 100px; transform-origin: top left; animation: popIn 0.2s ease-out; }
+        .context-menu-item { padding: 14px 16px; font-size: 14px; font-weight: 600; color: var(--text-main); border-bottom: 1px solid var(--border-color); cursor: pointer; text-align: center; background: transparent; border-left: none; border-right: none; border-top: none; }
+        .context-menu-item:last-child { border-bottom: none; }
+        .context-menu-item:active { background: var(--input-bg); }
+        .context-menu-item.danger { color: #FF3B30; }
     </style>
 </head>
 <body>
@@ -937,6 +951,12 @@
                 </div>
             </div>
         </div>
+
+        <!-- AI 气泡长按菜单 -->
+        <div class="context-menu" id="chatContextMenu">
+            <button class="context-menu-item" onclick="handleContextCopy()">复制</button>
+            <button class="context-menu-item danger" onclick="handleContextDelete()">删除</button>
+        </div>
     </div>
 
     <script>
@@ -1440,16 +1460,63 @@ relationship_with_user:
             renderSessionList();
         }
 
+        let longPressTimer = null;
+        let longPressTargetMsgIndex = -1;
+        let longPressStartX = 0, longPressStartY = 0;
+
+        function showContextMenu(e, msgIndex) {
+            e.preventDefault();
+            longPressTargetMsgIndex = msgIndex;
+            const menu = document.getElementById('chatContextMenu');
+            menu.style.display = 'flex';
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const rect = document.body.getBoundingClientRect();
+            if (clientX + 100 > rect.width) clientX -= 100;
+            if (clientY + 100 > rect.height) clientY -= 100;
+
+            menu.style.left = clientX + 'px';
+            menu.style.top = clientY + 'px';
+        }
+
+        function closeContextMenu() {
+            document.getElementById('chatContextMenu').style.display = 'none';
+            longPressTargetMsgIndex = -1;
+        }
+
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.context-menu')) closeContextMenu();
+        });
+
+        function handleContextCopy() {
+            if(longPressTargetMsgIndex < 0) return;
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            const msg = session.messages[longPressTargetMsgIndex];
+            if(msg) {
+                const text = msg.variants ? msg.variants[msg.currentVariant] : msg.content;
+                navigator.clipboard.writeText(text).then(() => alert('气泡内容已成功复制！')).catch(() => alert('复制失败，请手动长按文字选取'));
+            }
+            closeContextMenu();
+        }
+
+        function handleContextDelete() {
+            if(longPressTargetMsgIndex < 0) return;
+            if(!confirm('确定删除这条AI回复吗？')) { closeContextMenu(); return; }
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            session.messages.splice(longPressTargetMsgIndex, 1);
+            localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+            closeContextMenu();
+            renderChat();
+        }
+
         function renderChat() {
             const chatBox = document.getElementById('chatBox');
             chatBox.innerHTML = '';
             const session = chatSessions.find(s => s.id === currentSessionId);
             if(!session) return;
 
-            // 兼容补充旧数据的创建时间
             if (!session.createdAt) session.createdAt = getNowString();
-
-            // 顶部专属时间旁白
             chatBox.innerHTML = `<div class="chat-sys-time">—— 人设室建立于 ${session.createdAt} ——</div>`;
 
             if(session.messages.length <= 1) {
@@ -1466,7 +1533,6 @@ relationship_with_user:
                 const msgDate = msg.timestamp.split(' ')[0];
                 const msgTime = msg.timestamp.split(' ')[1];
 
-                // 穿插系统旁白提示跨天日期
                 if (msgDate !== lastDate) {
                     const sysTime = document.createElement('div');
                     sysTime.className = 'chat-sys-time';
@@ -1512,9 +1578,34 @@ relationship_with_user:
                         </div>
                     `;
                     div.innerHTML = `<div class="msg-content">${contentHtml}</div><div class="bubble-time">${msgTime}</div>${footerHtml}`;
+                    
+                    // 绑定长按事件 (仅AI气泡)
+                    div.addEventListener('touchstart', (e) => {
+                        longPressStartX = e.touches[0].clientX;
+                        longPressStartY = e.touches[0].clientY;
+                        longPressTimer = setTimeout(() => { showContextMenu(e, i); }, 600);
+                    }, {passive: false});
+                    div.addEventListener('touchend', () => clearTimeout(longPressTimer));
+                    div.addEventListener('touchmove', (e) => {
+                        if(Math.abs(e.touches[0].clientX - longPressStartX) > 10 || Math.abs(e.touches[0].clientY - longPressStartY) > 10) clearTimeout(longPressTimer);
+                    });
+                    div.addEventListener('mousedown', (e) => {
+                        longPressTimer = setTimeout(() => { showContextMenu(e, i); }, 600);
+                    });
+                    div.addEventListener('mouseup', () => clearTimeout(longPressTimer));
+                    div.addEventListener('mousemove', () => clearTimeout(longPressTimer));
                 }
                 chatBox.appendChild(div);
             }
+            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
+        }
+
+        function showTypingIndicator() {
+            const chatBox = document.getElementById('chatBox');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-bubble';
+            typingDiv.innerHTML = '对方正在输入中 <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            chatBox.appendChild(typingDiv);
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
         }
 
@@ -1585,8 +1676,7 @@ relationship_with_user:
                 templateStr = t ? t.content : BUILTIN_TEMPLATE;
             }
             
-            // 动态判断：内置模板显示A，自定义模板显示B
-            let copyrightStr = isDefault ? '该模板来源于鸣曲相思逸的人设生成器' : '该人设由鸣曲相思逸的人设生成器辅助生成';
+            let copyrightStr = isDefault ? '### 该人设模板来源于鸣曲相思逸的生成器' : '### 该人设由鸣曲相思逸的生成器辅助生成';
             
             let ruleStr = '';
             const activeRules = genRules.filter(r => r.enabled);
@@ -1597,17 +1687,16 @@ relationship_with_user:
             return `你是一个顶级的小说/游戏角色设定师。请你遵循以下两个阶段与用户互动：
 
 【阶段一：前期讨论与引导】
-如果用户提供的信息不完整、大纲模糊或缺乏核心设定要素，请你先以设定师的身份与用户进行对话交流！主动向用户提问、发散建议（例如追问外貌特征、性格矛盾点、背景故事等），逐步引导用户完善细节。**在此阶段绝对不要直接输出任何模板代码或最终人设表！**
+如果用户并没有明确人设要求、大纲模糊或还在探索阶段，请你先以设定师的身份与用户进行自然对话交流！主动向用户提问、发散建议（例如追问外貌特征、性格矛盾点、背景故事等），逐步引导用户完善细节。**在此阶段绝对不要直接输出任何模板代码或最终人设表，只需要普通聊天即可！**
 
 【阶段二：最终生成人设】
-当用户明确要求直接生成，或者经过讨论后设定细节已经足够明确时，请严格按照下方的【模板结构】输出完整人设。
+当且仅当用户明确要求直接生成，或者经过讨论后设定细节已经足够充分且明确时，请严格按照下方的【模板结构】输出完整人设。
 
 【生成阶段必须遵守的要求】：
-1. 必须且只能在生成的文本最开头（也就是人设内容的第一行位置），准确无误地打印这句话作为版权标识：“${copyrightStr}”
+1. 必须且只能在生成的设定的【最开头】（也就是严格在 <info> 标签或内容的前面第一行），准确无误地打印这句话：“${copyrightStr}”
 2. 各个字段请根据逻辑丰满扩写，未提及的部分请合理发散填补。排版必须整洁干净。${ruleStr}
 
-【模板结构】：
-${templateStr}`;
+【模板结构】：\n${templateStr}`;
         }
 
         async function generateReply() {
@@ -1621,11 +1710,11 @@ ${templateStr}`;
 
             const genBtn = document.getElementById('generateBtn');
             genBtn.disabled = true; genBtn.style.opacity = '0.5';
+            showTypingIndicator();
 
             const messagesToSend = JSON.parse(JSON.stringify(session.messages));
             messagesToSend[0].content = buildSystemPrompt();
             
-            // 剔除给大模型的无用内部字段（防止报错）
             messagesToSend.forEach(msg => { delete msg.timestamp; delete msg.variants; delete msg.currentVariant; });
 
             try {
@@ -1647,10 +1736,10 @@ ${templateStr}`;
                     timestamp: getNowString()
                 });
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
-                renderChat();
             } catch (error) {
                 alert('生成失败，请检查网络或 API 配置。\n错误: ' + error.message);
             } finally {
+                renderChat(); 
                 genBtn.disabled = false; genBtn.style.opacity = '1';
             }
         }
@@ -1666,6 +1755,7 @@ ${templateStr}`;
 
             const regenBtn = document.getElementById('regen_btn_' + index);
             if(regenBtn) { regenBtn.disabled = true; regenBtn.innerHTML = '思考中...'; }
+            showTypingIndicator();
 
             try {
                 const historyToSent = JSON.parse(JSON.stringify(session.messages.slice(0, index)));
@@ -1686,13 +1776,13 @@ ${templateStr}`;
                 msg.variants.push(newReply);
                 msg.currentVariant = msg.variants.length - 1;
                 msg.content = newReply;
-                msg.timestamp = getNowString(); // 更新重回的系统时间
+                msg.timestamp = getNowString(); 
                 
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
-                renderChat();
             } catch (error) {
                 alert('重回失败，请检查网络或 API 配置。\n错误: ' + error.message);
-                renderChat(); 
+            } finally {
+                renderChat();
             }
         }
 
