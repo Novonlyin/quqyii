@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 人设生成器</title>
+    <title>造梦工坊 - 全能创作工作台</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FAFAFA">
     <link rel="apple-touch-icon" href="https://nos.netease.com/vcloud-statistic/nrtc/9de5d1c8-a976-434e-8195-5dbc2a586a0a.png">
@@ -367,8 +367,8 @@
             <div class="landing-logo">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             </div>
-            <h1 class="landing-title">AI 人设生成器</h1>
-            <p class="landing-subtitle">私密、极简、专注的定制化设定创作空间</p>
+            <h1 class="landing-title">造梦工坊</h1>
+            <p class="landing-subtitle">私密、极简、专注于设定与互动的全能工作台</p>
             
             <div class="landing-disclaimer" id="disclaimerBox">
                 <h3 style="color: var(--text-main); font-size: 16px; font-weight: 700; margin: 0 0 16px 0; text-align: center; letter-spacing: 0.5px;">—— 免责声明与使用规范 ——</h3>
@@ -1720,10 +1720,35 @@ relationship_with_user:
                 return;
             }
 
-            session.rpMessages.forEach(msg => {
+            session.rpMessages.forEach((msg, i) => {
                 const div = document.createElement('div');
                 div.className = 'message ' + (msg.role === 'user' ? 'msg-user' : 'msg-ai');
-                div.innerHTML = msg.content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                
+                let inner = msg.content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                
+                if (msg.role === 'assistant') {
+                    // 如果存在已经翻译好的文本，则展示出来
+                    if (msg.translation) {
+                        inner += `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,0.1); color: var(--text-muted); font-size: 13px;"><b>翻译：</b>${msg.translation.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>`;
+                    }
+                    
+                    // 智能识别：只在尚未翻译，并且包含外文字母/日韩文时，渲染翻译按钮
+                    let transBtn = '';
+                    if (!msg.translation && /[a-zA-Z\u3040-\u30ff\uac00-\ud7a3]{2,}/.test(msg.content)) {
+                        transBtn = `
+                            <div class="msg-ai-footer" style="justify-content: flex-end; padding-top: 6px; margin-top: 4px; border-top: none;">
+                                <button class="regen-btn" id="trans_btn_${i}" onclick="translateRpMessage(${i})">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"></path></svg>
+                                    翻译外语
+                                </button>
+                            </div>
+                        `;
+                    }
+                    div.innerHTML = `<div class="msg-content">${inner}</div>${transBtn}`;
+                } else {
+                    div.innerHTML = inner;
+                }
+                
                 chatBox.appendChild(div);
             });
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
@@ -1770,6 +1795,39 @@ relationship_with_user:
                 alert('发送失败: ' + error.message);
             } finally {
                 btn.disabled = false; btn.style.opacity = '1';
+            }
+        }
+
+        async function translateRpMessage(index) {
+            if (!currentApiUrl || !currentApiKey || !currentModel) return alert('API未配置！');
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            const msg = session.rpMessages[index];
+
+            const btn = document.getElementById('trans_btn_' + index);
+            if(btn) { btn.disabled = true; btn.innerHTML = '翻译中...'; }
+
+            try {
+                // 单独调用大模型进行纯翻译任务
+                const response = await fetch(`${currentApiUrl.replace(/\/+$/, '')}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+                    body: JSON.stringify({
+                        model: currentModel,
+                        messages: [
+                            { role: 'system', content: '你是一个精准的翻译引擎。请将用户输入的文本翻译成流畅的中文。只输出最终的中文翻译结果，不要有任何多余的解释、问候或标点符号。' },
+                            { role: 'user', content: msg.content }
+                        ]
+                    })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+
+                msg.translation = data.choices[0].message.content;
+                localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
+                renderRpChat();
+            } catch (error) {
+                alert('翻译失败: ' + error.message);
+                if(btn) { btn.disabled = false; btn.innerHTML = '翻译外语'; }
             }
         }
 
