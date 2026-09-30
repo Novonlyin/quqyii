@@ -953,8 +953,6 @@
 
         const BUILTIN_TEMPLATE = `<info>
 <character>
-该模板来源于鸣曲相思逸的人设生成器
-
 \`\`\`yaml
 name:                # 角色姓名（中英文）
 chinese_name:        # 中文姓名
@@ -1311,7 +1309,7 @@ relationship_with_user:
                 document.getElementById('templateModalTitle').innerText = '新建自定义模板';
                 idInput.value = '';
                 nameInput.value = '';
-                contentInput.value = '<info>\n<character>\n该模板来源于鸣曲相思逸的人设生成器\n\n```yaml\n\n```\n</character>\n</info>';
+                contentInput.value = '<info>\n<character>\n\n```yaml\n\n```\n</character>\n</info>';
                 nameInput.disabled = false;
                 contentInput.disabled = false;
                 saveBtn.style.display = 'block';
@@ -1578,12 +1576,17 @@ relationship_with_user:
 
         function buildSystemPrompt() {
             let templateStr = '';
-            if (activeTemplateId === 'default') {
+            let isDefault = (activeTemplateId === 'default');
+            
+            if (isDefault) {
                 templateStr = BUILTIN_TEMPLATE;
             } else {
                 const t = customTemplates.find(x => x.id === activeTemplateId);
                 templateStr = t ? t.content : BUILTIN_TEMPLATE;
             }
+            
+            // 动态判断：内置模板显示A，自定义模板显示B
+            let copyrightStr = isDefault ? '该模板来源于鸣曲相思逸的人设生成器' : '该人设由鸣曲相思逸的人设生成器辅助生成';
             
             let ruleStr = '';
             const activeRules = genRules.filter(r => r.enabled);
@@ -1591,7 +1594,20 @@ relationship_with_user:
                 ruleStr = "\n\n【必须严格遵守的生成限制与避雷规则】：\n" + activeRules.map((r, i) => `${i+1}. ${r.content}`).join('\n');
             }
 
-            return `你是一个顶级的小说/游戏角色设定师。请严格按照下方【模板结构】，根据用户发送的设定大纲/文档/图片生成人设。排版请整洁，每个字段根据逻辑丰满扩写，没有提及的部分请自由发散填补。请原样保留模板中关于“该模板来源于鸣曲相思逸”的任何字样，并只输出填好的内容。${ruleStr}\n\n【模板结构】：\n${templateStr}`;
+            return `你是一个顶级的小说/游戏角色设定师。请你遵循以下两个阶段与用户互动：
+
+【阶段一：前期讨论与引导】
+如果用户提供的信息不完整、大纲模糊或缺乏核心设定要素，请你先以设定师的身份与用户进行对话交流！主动向用户提问、发散建议（例如追问外貌特征、性格矛盾点、背景故事等），逐步引导用户完善细节。**在此阶段绝对不要直接输出任何模板代码或最终人设表！**
+
+【阶段二：最终生成人设】
+当用户明确要求直接生成，或者经过讨论后设定细节已经足够明确时，请严格按照下方的【模板结构】输出完整人设。
+
+【生成阶段必须遵守的要求】：
+1. 必须且只能在生成的文本最开头（也就是人设内容的第一行位置），准确无误地打印这句话作为版权标识：“${copyrightStr}”
+2. 各个字段请根据逻辑丰满扩写，未提及的部分请合理发散填补。排版必须整洁干净。${ruleStr}
+
+【模板结构】：
+${templateStr}`;
         }
 
         async function generateReply() {
