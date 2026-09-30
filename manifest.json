@@ -1,6 +1,6 @@
 {
-  "name": "AI人设生成",
-  "short_name": "人设工具",
+  "name": "造梦工坊 - 全能创作工作台",
+  "short_name": "造梦工坊",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#FAFAFA",
