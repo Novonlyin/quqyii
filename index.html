@@ -335,6 +335,12 @@
         .badge-public { background: #E4F1E9; color: #34C759; }
         .badge-paid { background: #EAF2FF; color: #007AFF; }
         
+        /* 新增：字体库专属 UI */
+        .lib-top-tabs { display: flex; background: var(--input-bg); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
+        .lib-top-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 14px; font-weight: 600; color: var(--text-muted); border-radius: 10px; cursor: pointer; transition: 0.2s; border: none; background: transparent; }
+        .lib-top-tab.active { background: #FFFFFF; color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .font-preview-box { width: 100%; min-height: 140px; max-height: 240px; overflow-y: auto; background: #FFFFFF; border: 1px dashed var(--border-color); border-radius: 16px; padding: 16px; font-size: 16px; line-height: 1.6; color: var(--text-main); margin-bottom: 20px; outline: none; box-sizing: border-box; transition: font-family 0.3s ease; box-shadow: inset 0 2px 10px rgba(0,0,0,0.02); }
+        
         /* 新增：登录欢迎页专属 UI */
         .landing-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; padding: 40px 24px; text-align: center; box-sizing: border-box; background: var(--bg-color); z-index: 50; position: absolute; inset: 0; }
         .landing-logo { width: 72px; height: 72px; background: var(--btn-bg); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: #FFF; margin-bottom: 20px; box-shadow: 0 10px 24px rgba(0,0,0,0.1); }
@@ -398,7 +404,7 @@
                     </div>
                     <div>
                         <strong style="color: var(--text-main);">3. 尊重原创与禁止牟利：</strong><br>
-                        本工具由原作者无偿公开分享，请大家尊重原创精神，严禁抄袭他人既有的作品与设定。未经原作者允许，<b>严禁对本工具进行任何形式的二传、二贩及私自二改</b>。绝对禁止使用本工具进行任何商业牟利行为（包括但不限于将本工具生成的人设文案进行有偿出售）。
+                        本工具由原作者无偿公开分享，请大家尊重原创精神，严禁抄袭他人既有的作品与设定。<b>为尊重作者心血与知识产权，系统在生成结果中会自动附带一行版权来源标识文字，请您在导出或分享人设文档时，务必保留此行文字，切勿擅自删除。</b>未经原作者允许，<b>严禁对本工具进行任何形式的二传、二贩及私自二改</b>。绝对禁止使用本工具进行任何商业牟利行为（包括但不限于将本工具生成的人设文案进行有偿出售）。
                     </div>
                     <div>
                         <strong style="color: var(--text-main);">4. 未成年人使用限制：</strong><br>
@@ -590,7 +596,7 @@
                             </div>
                             <div>
                                 <strong style="color: var(--text-main);">3. 尊重原创与禁止牟利：</strong><br>
-                                本工具由原作者无偿公开分享，请大家尊重原创精神，严禁抄袭他人既有的作品与设定。未经原作者允许，<b>严禁对本工具进行任何形式的二传、二贩及私自二改</b>。绝对禁止使用本工具进行任何商业牟利行为（包括但不限于将本工具生成的人设文案进行有偿出售）。
+                                本工具由原作者无偿公开分享，请大家尊重原创精神，严禁抄袭他人既有的作品与设定。<b>为尊重作者心血与知识产权，系统在生成结果中会自动附带一行版权来源标识文字，请您在导出或分享人设文档时，务必保留此行文字，切勿擅自删除。</b>未经原作者允许，<b>严禁对本工具进行任何形式的二传、二贩及私自二改</b>。绝对禁止使用本工具进行任何商业牟利行为（包括但不限于将本工具生成的人设文案进行有偿出售）。
                             </div>
                             <div>
                                 <strong style="color: var(--text-main);">4. 未成年人使用限制：</strong><br>
@@ -780,68 +786,140 @@
                 </div>
             </div>
 
-            <!-- 视图三：API 预设库 -->
+            <!-- 视图三：储存库 (API / 字体) -->
             <div id="libraryView" class="view-panel">
-                <div class="search-bar">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" placeholder="搜索 API 站名..." oninput="renderLibrary()">
-                </div>
+                <h2 class="panel-title" style="margin-bottom: 16px;">储存库</h2>
                 
-                <button class="btn-secondary flex-center" style="margin-bottom:16px;" onclick="toggleAddForm()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 录入新 API
-                </button>
-                
-                <div id="addApiForm" style="display:none;">
-                    <input type="hidden" id="followUpLibId" value="">
-                    <div style="display:flex; gap:12px;">
-                        <div class="form-group" style="flex:1;"><label>API 站名 (必填)</label><input type="text" id="libName" placeholder="例如：某某中转"></div>
-                        <div class="form-group" style="flex:1;"><label>站点属性</label><select id="libType"><option value="公益站">公益站</option><option value="付费站" selected>付费站</option></select></div>
-                    </div>
-                    <div style="display:flex; gap:12px;">
-                        <div class="form-group" style="flex:1;"><label>账号名字</label><input type="text" id="libAccount" placeholder="邮箱 / 手机号"></div>
-                        <div class="form-group" style="flex:1;"><label>账号密码</label><input type="password" id="libAccountPwd" placeholder="******"></div>
-                    </div>
-                    <div class="form-group"><label>反代地址 (必填)</label><input type="text" id="libUrl" placeholder="https://api..."></div>
-                    <div class="form-group"><label>密钥 (必填)</label><input type="password" id="libKey" placeholder="sk-..."></div>
-                    <div class="form-group"><label>想法备注</label><input type="text" id="libNote" placeholder="例如：接口稳定，速度快"></div>
-                    <div style="display:flex; gap:12px;">
-                        <div class="form-group" style="flex:1;">
-                            <label>星级评分</label>
-                            <select id="libStars">
-                                <option value="5">五星</option><option value="4">四星</option><option value="3" selected>三星</option>
-                                <option value="2">二星</option><option value="1">一星</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="flex:1;">
-                            <label>价格水平</label>
-                            <select id="libPrice">
-                                <option value="免费">免费</option><option value="便宜">便宜</option><option value="适中" selected>适中</option><option value="昂贵">昂贵</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="flex:1;">
-                            <label>是否避雷</label>
-                            <select id="libDrama" onchange="toggleDramaInput()">
-                                <option value="无瓜" selected>无瓜</option><option value="有瓜">有瓜</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group" id="dramaInputGroup" style="display:none;">
-                        <label style="color:#FF3B30;">请简述是什么瓜</label>
-                        <input type="text" id="libDramaDetail" placeholder="例如：跑路、封号、虚标...">
-                    </div>
-                    <div style="display:flex; gap:12px;">
-                        <button class="btn-secondary" onclick="cancelAddForm()">取消</button>
-                        <button class="btn-primary" id="saveApiBtn" onclick="saveLibraryApi()">确认添加入库</button>
-                    </div>
-                </div>
-                
-                <div class="lib-tabs">
-                    <button class="lib-tab active" onclick="setLibFilter('全部')">全部</button>
-                    <button class="lib-tab" onclick="setLibFilter('付费站')">付费站</button>
-                    <button class="lib-tab" onclick="setLibFilter('公益站')">公益站</button>
+                <div class="lib-top-tabs">
+                    <button class="lib-top-tab active" id="libTabApi" onclick="switchLibSubTab('api')">API 站子</button>
+                    <button class="lib-top-tab" id="libTabFont" onclick="switchLibSubTab('font')">字体库</button>
                 </div>
 
-                <div class="api-list" id="apiList"></div>
+                <!-- API 子储存库 -->
+                <div id="apiLibContent" style="display: block;">
+                    <div class="search-bar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="searchInput" placeholder="搜索 API 站名..." oninput="renderLibrary()">
+                    </div>
+                    
+                    <button class="btn-secondary flex-center" style="margin-bottom:16px;" onclick="toggleAddForm()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 录入新 API
+                    </button>
+                    
+                    <div id="addApiForm" style="display:none;">
+                        <input type="hidden" id="followUpLibId" value="">
+                        <div style="display:flex; gap:12px;">
+                            <div class="form-group" style="flex:1;"><label>API 站名 (必填)</label><input type="text" id="libName" placeholder="例如：某某中转"></div>
+                            <div class="form-group" style="flex:1;"><label>站点属性</label><select id="libType"><option value="公益站">公益站</option><option value="付费站" selected>付费站</option></select></div>
+                        </div>
+                        <div style="display:flex; gap:12px;">
+                            <div class="form-group" style="flex:1;"><label>账号名字</label><input type="text" id="libAccount" placeholder="邮箱 / 手机号"></div>
+                            <div class="form-group" style="flex:1;"><label>账号密码</label><input type="password" id="libAccountPwd" placeholder="******"></div>
+                        </div>
+                        <div class="form-group"><label>反代地址 (必填)</label><input type="text" id="libUrl" placeholder="https://api..."></div>
+                        <div class="form-group"><label>密钥 (必填)</label><input type="password" id="libKey" placeholder="sk-..."></div>
+                        <div class="form-group"><label>想法备注</label><input type="text" id="libNote" placeholder="例如：接口稳定，速度快"></div>
+                        <div style="display:flex; gap:12px;">
+                            <div class="form-group" style="flex:1;">
+                                <label>星级评分</label>
+                                <select id="libStars"><option value="5">五星</option><option value="4">四星</option><option value="3" selected>三星</option><option value="2">二星</option><option value="1">一星</option></select>
+                            </div>
+                            <div class="form-group" style="flex:1;">
+                                <label>价格水平</label>
+                                <select id="libPrice"><option value="免费">免费</option><option value="便宜">便宜</option><option value="适中" selected>适中</option><option value="昂贵">昂贵</option></select>
+                            </div>
+                            <div class="form-group" style="flex:1;">
+                                <label>是否避雷</label>
+                                <select id="libDrama" onchange="toggleDramaInput()"><option value="无瓜" selected>无瓜</option><option value="有瓜">有瓜</option></select>
+                            </div>
+                        </div>
+                        <div class="form-group" id="dramaInputGroup" style="display:none;"><label style="color:#FF3B30;">请简述是什么瓜</label><input type="text" id="libDramaDetail" placeholder="例如：跑路、封号、虚标..."></div>
+                        <div style="display:flex; gap:12px;">
+                            <button class="btn-secondary" onclick="cancelAddForm()">取消</button>
+                            <button class="btn-primary" id="saveApiBtn" onclick="saveLibraryApi()">确认添加入库</button>
+                        </div>
+                    </div>
+                    
+                    <div class="lib-tabs">
+                        <button class="lib-tab active" onclick="setLibFilter('全部')">全部</button>
+                        <button class="lib-tab" onclick="setLibFilter('付费站')">付费站</button>
+                        <button class="lib-tab" onclick="setLibFilter('公益站')">公益站</button>
+                    </div>
+                    <div class="api-list" id="apiList"></div>
+                </div>
+
+                <!-- 字体子储存库 -->
+                <div id="fontLibContent" style="display: none;">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">实时预览区 (点击虚线框内可自由编辑文字)</div>
+                    <div id="fontPreviewArea" class="font-preview-box" contenteditable="true" spellcheck="false">
+山川异域，风月同天。落霞与孤鹜齐飞，秋水共长天一色。这不仅是一段用来感受文字韵律的话语，更是专为您测试中文排版的详尽文本。
+
+The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. This sentence contains every letter of the English alphabet.
+
+あの山を越えて、美しい風景を見に行きましょう。風の音が聞こえますか。日本語のフォントテストのためのテキストです。
+
+무궁화 꽃이 피었습니다. 별 헤는 밤, 조용히 불어오는 바람을 느끼며. 한국어 테스트를 위한 문장입니다. 아름다운 서체를 확인해보세요.
+                    </div>
+
+                    <button class="btn-secondary flex-center" style="margin-bottom:16px;" onclick="toggleFontAddForm()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 导入新字体
+                    </button>
+
+                    <div id="addFontForm" style="display:none; background: #FAFAFA; padding: 16px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label>字体命名 (必填)</label>
+                            <input type="text" id="fontName" placeholder="例如：思源黑体 / 霞鹜文楷">
+                        </div>
+                        <div class="form-group">
+                            <label>导入来源</label>
+                            <select id="fontSource" onchange="toggleFontSourceInput()">
+                                <option value="url">URL 直链导入 (支持跨域链接)</option>
+                                <option value="ttf">本地 TTF 文件导入 (自动存入本地库)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="fontUrlGroup">
+                            <label>直链 URL</label>
+                            <input type="text" id="fontUrl" placeholder="https://...">
+                        </div>
+                        <div class="form-group" id="fontTtfGroup" style="display: none;">
+                            <label>选择 TTF 文件</label>
+                            <button class="btn-secondary flex-center" onclick="document.getElementById('fontTtfFile').click()">点击选取文件</button>
+                            <input type="file" id="fontTtfFile" accept=".ttf,.otf,.woff,.woff2" style="display:none;" onchange="handleFontFileSelect(event)">
+                            <div id="fontFileDisplay" style="font-size:12px; color:var(--text-muted); margin-top:8px;">未选择文件</div>
+                            <input type="hidden" id="fontBase64Temp">
+                        </div>
+                        <div class="form-group">
+                            <label>字体备注 (选填)</label>
+                            <input type="text" id="fontNote" placeholder="例如：极简冷感风，适合赛博设定">
+                        </div>
+                        <div style="display:flex; gap:12px;">
+                            <button class="btn-secondary" onclick="document.getElementById('addFontForm').style.display='none'">取消</button>
+                            <button class="btn-primary" onclick="saveNewFont()">确认入库</button>
+                        </div>
+                    </div>
+
+                    <div class="api-list" id="fontListContainer"></div>
+                </div>
+            </div>
+
+            <!-- 字体二次修改弹窗 -->
+            <div class="modal-overlay" id="fontEditModal">
+                <div class="modal-content" style="width: 90%; max-width: 320px;">
+                    <h3 class="modal-title">编辑字体信息</h3>
+                    <input type="hidden" id="editFontId">
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label>字体命名</label>
+                        <input type="text" id="editFontName" placeholder="新名字">
+                    </div>
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label>字体备注</label>
+                        <input type="text" id="editFontNote" placeholder="新备注">
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" onclick="document.getElementById('fontEditModal').style.display='none'">取消</button>
+                        <button class="btn-primary" onclick="confirmEditFont()">确认修改</button>
+                    </div>
+                </div>
             </div>
 
             <!-- 视图四：文本编辑器 (Docx 库) -->
@@ -1115,6 +1193,43 @@ relationship_with_user:
         // 新增：Doc系统数据
         let savedDocs = JSON.parse(localStorage.getItem('savedDocs')) || [];
         let currentDocFilter = '全部';
+
+        // 字体系统数据与底层 IndexedDB 支持 (防爆缓存)
+        let savedFonts = JSON.parse(localStorage.getItem('savedFonts')) || [];
+        const FontDB = {
+            init() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open('PersonaFontDB', 1);
+                    req.onupgradeneeded = e => e.target.result.createObjectStore('fonts');
+                    req.onsuccess = e => resolve(e.target.result);
+                    req.onerror = e => reject(e);
+                });
+            },
+            async save(id, base64) {
+                const db = await this.init();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('fonts', 'readwrite');
+                    tx.objectStore('fonts').put(base64, id);
+                    tx.oncomplete = () => resolve();
+                });
+            },
+            async get(id) {
+                const db = await this.init();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('fonts', 'readonly');
+                    const req = tx.objectStore('fonts').get(id);
+                    req.onsuccess = () => resolve(req.result);
+                });
+            },
+            async delete(id) {
+                const db = await this.init();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('fonts', 'readwrite');
+                    tx.objectStore('fonts').delete(id);
+                    tx.oncomplete = () => resolve();
+                });
+            }
+        };      
 
         // 时间格式化辅助模块
         function getNowString() {
@@ -1676,7 +1791,8 @@ relationship_with_user:
                 templateStr = t ? t.content : BUILTIN_TEMPLATE;
             }
             
-            let copyrightStr = isDefault ? '### 该人设模板来源于鸣曲相思逸的生成器' : '### 该人设由鸣曲相思逸的生成器辅助生成';
+            // 动态判断：内置模板显示A，自定义模板显示B
+            let copyrightStr = isDefault ? '该模板来源于鸣曲相思逸的人设生成器' : '该人设由鸣曲相思逸的人设生成器辅助生成';
             
             let ruleStr = '';
             const activeRules = genRules.filter(r => r.enabled);
@@ -1684,19 +1800,21 @@ relationship_with_user:
                 ruleStr = "\n\n【必须严格遵守的生成限制与避雷规则】：\n" + activeRules.map((r, i) => `${i+1}. ${r.content}`).join('\n');
             }
 
-            return `你是一个顶级的小说/游戏角色设定师。请你遵循以下两个阶段与用户互动：
+            return `你是一个顶级的小说/游戏角色设定师。请你严格遵循以下逻辑与用户进行交互：
 
 【阶段一：前期讨论与引导】
-如果用户并没有明确人设要求、大纲模糊或还在探索阶段，请你先以设定师的身份与用户进行自然对话交流！主动向用户提问、发散建议（例如追问外貌特征、性格矛盾点、背景故事等），逐步引导用户完善细节。**在此阶段绝对不要直接输出任何模板代码或最终人设表，只需要普通聊天即可！**
+当用户发送初步灵感或大纲时，你必须先以设定师的身份与用户探讨，主动追问缺乏的核心要素（如外貌细节、性格反差、核心背景等）来完善设定。
+⚠️极度重要指示：在讨论阶段，绝对禁止直接输出人设模板结构！并且，在你每一轮回复的最末尾，都必须礼貌地询问用户：“您的要求都说完整了吗？”（或类似话术）。
 
 【阶段二：最终生成人设】
-当且仅当用户明确要求直接生成，或者经过讨论后设定细节已经足够充分且明确时，请严格按照下方的【模板结构】输出完整人设。
+⚠️极度重要指示：只有当用户在对话中明确表示“要求说完整了”、“大纲说完了”、“没别的了”或明确指令“直接生成吧”时，你才能停止提问，进入生成阶段，并严格按照下方的【模板结构】输出最终人设表。
 
-【生成阶段必须遵守的要求】：
-1. 必须且只能在生成的设定的【最开头】（也就是严格在 <info> 标签或内容的前面第一行），准确无误地打印这句话：“${copyrightStr}”
+【生成阶段必须遵守的排版与版权要求】：
+1. 你必须将版权声明文字准确无误地插入在生成的文本中：请紧接在 <info> 和 <character> 标签的下一行（如果模板没有这两个标签，则放在最开头第一行），直接打印这句话：“${copyrightStr}”。禁止遗漏或篡改。
 2. 各个字段请根据逻辑丰满扩写，未提及的部分请合理发散填补。排版必须整洁干净。${ruleStr}
 
-【模板结构】：\n${templateStr}`;
+【模板结构】：
+${templateStr}`;
         }
 
         async function generateReply() {
@@ -2067,6 +2185,163 @@ relationship_with_user:
             genRules = genRules.filter(r => r.id !== id);
             localStorage.setItem('genRules', JSON.stringify(genRules));
             renderRulesView();
+        }
+
+        /* ======= 字体储存库逻辑 ======= */
+        function switchLibSubTab(tab) {
+            document.getElementById('libTabApi').classList.remove('active');
+            document.getElementById('libTabFont').classList.remove('active');
+            document.getElementById('apiLibContent').style.display = 'none';
+            document.getElementById('fontLibContent').style.display = 'none';
+            
+            if (tab === 'api') {
+                document.getElementById('libTabApi').classList.add('active');
+                document.getElementById('apiLibContent').style.display = 'block';
+            } else {
+                document.getElementById('libTabFont').classList.add('active');
+                document.getElementById('fontLibContent').style.display = 'block';
+                renderFontList();
+            }
+        }
+
+        function toggleFontAddForm() {
+            const form = document.getElementById('addFontForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            if(form.style.display === 'block') {
+                document.getElementById('fontName').value = '';
+                document.getElementById('fontSource').value = 'url';
+                document.getElementById('fontUrl').value = '';
+                document.getElementById('fontNote').value = '';
+                document.getElementById('fontBase64Temp').value = '';
+                document.getElementById('fontFileDisplay').innerText = '未选择文件';
+                toggleFontSourceInput();
+            }
+        }
+
+        function toggleFontSourceInput() {
+            const source = document.getElementById('fontSource').value;
+            document.getElementById('fontUrlGroup').style.display = source === 'url' ? 'block' : 'none';
+            document.getElementById('fontTtfGroup').style.display = source === 'ttf' ? 'block' : 'none';
+        }
+
+        function handleFontFileSelect(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            document.getElementById('fontFileDisplay').innerText = `已选择: ${file.name} (加载中...)`;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                document.getElementById('fontBase64Temp').value = evt.target.result;
+                document.getElementById('fontFileDisplay').innerText = `加载完毕: ${file.name} (请点击确认入库)`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function saveNewFont() {
+            const name = document.getElementById('fontName').value.trim();
+            const source = document.getElementById('fontSource').value;
+            const url = document.getElementById('fontUrl').value.trim();
+            const note = document.getElementById('fontNote').value.trim();
+            const base64 = document.getElementById('fontBase64Temp').value;
+
+            if(!name) return alert('字体命名不能为空！');
+            
+            const newId = 'font_' + Date.now();
+            const dateStr = getNowString();
+
+            if (source === 'url') {
+                if(!url) return alert('请填入合法的直链 URL！');
+                savedFonts.push({ id: newId, name, note, source: 'URL直链', val: url, date: dateStr });
+            } else {
+                if(!base64) return alert('请先点击上方按钮选择 TTF 文件！');
+                // 因为TTF太大，Base64存入 IndexedDB
+                await FontDB.save(newId, base64);
+                savedFonts.push({ id: newId, name, note, source: 'TTF本地', val: 'indexedDB', date: dateStr });
+            }
+
+            localStorage.setItem('savedFonts', JSON.stringify(savedFonts));
+            document.getElementById('addFontForm').style.display = 'none';
+            renderFontList();
+            alert('字体入库成功！');
+        }
+
+        async function applyFont(id) {
+            const font = savedFonts.find(f => f.id === id);
+            if(!font) return;
+            try {
+                let fontUrl = font.val;
+                if(font.source === 'TTF本地') {
+                    const b64 = await FontDB.get(id);
+                    if(!b64) throw new Error('底层字体数据已流失，请重新导入');
+                    fontUrl = b64;
+                }
+                const fontFaceName = 'custom_' + font.id;
+                const fontFace = new FontFace(fontFaceName, `url(${fontUrl})`);
+                await fontFace.load();
+                document.fonts.add(fontFace);
+                document.getElementById('fontPreviewArea').style.fontFamily = fontFaceName;
+            } catch(e) {
+                alert('应用字体失败 (可能是由于跨域限制或文件格式错误): ' + e.message);
+            }
+        }
+
+        function openFontEditModal(id) {
+            const font = savedFonts.find(f => f.id === id);
+            if(!font) return;
+            document.getElementById('editFontId').value = font.id;
+            document.getElementById('editFontName').value = font.name;
+            document.getElementById('editFontNote').value = font.note || '';
+            document.getElementById('fontEditModal').style.display = 'flex';
+        }
+
+        function confirmEditFont() {
+            const id = document.getElementById('editFontId').value;
+            const font = savedFonts.find(f => f.id === id);
+            if(font) {
+                font.name = document.getElementById('editFontName').value.trim() || '未命名';
+                font.note = document.getElementById('editFontNote').value.trim() || '';
+                localStorage.setItem('savedFonts', JSON.stringify(savedFonts));
+                renderFontList();
+            }
+            document.getElementById('fontEditModal').style.display = 'none';
+        }
+
+        async function deleteFont(id) {
+            if(!confirm('确定要彻底删除该字体吗？')) return;
+            const font = savedFonts.find(f => f.id === id);
+            if(font && font.source === 'TTF本地') {
+                await FontDB.delete(id); // 释放内存
+            }
+            savedFonts = savedFonts.filter(f => f.id !== id);
+            localStorage.setItem('savedFonts', JSON.stringify(savedFonts));
+            renderFontList();
+        }
+
+        function renderFontList() {
+            const list = document.getElementById('fontListContainer');
+            if(!list) return;
+            list.innerHTML = '';
+            if(savedFonts.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">暂无字体，快去导入吧。</div>';
+                return;
+            }
+            savedFonts.forEach(f => {
+                const card = document.createElement('div');
+                card.className = 'api-card';
+                card.innerHTML = `
+                    <div class="api-card-header">
+                        <h4 style="font-size:15px;">${f.name}</h4>
+                        <span class="api-badge" style="background:var(--text-main);">${f.source}</span>
+                    </div>
+                    <div class="api-note" style="margin-bottom:6px;">备注: ${f.note || '无'}</div>
+                    <div class="api-note" style="margin-bottom:12px;">导入时间: ${f.date}</div>
+                    <div class="api-actions">
+                        <button class="action-btn flex-center" style="background:#EAF2FF; color:#007AFF;" onclick="applyFont('${f.id}')">应用预览</button>
+                        <button class="action-btn flex-center" onclick="openFontEditModal('${f.id}')">修改备注</button>
+                        <button class="action-btn action-danger flex-center" onclick="deleteFont('${f.id}')">删除</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
         }
 
         /* ======= 文档与导出库逻辑 ======= */
