@@ -339,7 +339,7 @@
         .lib-top-tabs { display: flex; background: var(--input-bg); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
         .lib-top-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 14px; font-weight: 600; color: var(--text-muted); border-radius: 10px; cursor: pointer; transition: 0.2s; border: none; background: transparent; }
         .lib-top-tab.active { background: #FFFFFF; color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .font-preview-box { width: 100%; min-height: 140px; max-height: 240px; overflow-y: auto; background: #FFFFFF; border: 1px dashed var(--border-color); border-radius: 16px; padding: 16px; font-size: 16px; line-height: 1.6; color: var(--text-main); margin-bottom: 20px; outline: none; box-sizing: border-box; transition: font-family 0.3s ease; box-shadow: inset 0 2px 10px rgba(0,0,0,0.02); }
+        .font-preview-box { width: 100%; min-height: 140px; height: auto; background: #FFFFFF; border: 1px dashed var(--border-color); border-radius: 16px; padding: 16px; font-size: 16px; line-height: 1.6; color: var(--text-main); margin-bottom: 20px; outline: none; box-sizing: border-box; transition: font-family 0.3s ease; box-shadow: inset 0 2px 10px rgba(0,0,0,0.02); word-break: break-all; }
         
         /* 新增：登录欢迎页专属 UI */
         .landing-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; padding: 40px 24px; text-align: center; box-sizing: border-box; background: var(--bg-color); z-index: 50; position: absolute; inset: 0; }
@@ -861,6 +861,11 @@ The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor 
 무궁화 꽃이 피었습니다. 별 헤는 밤, 조용히 불어오는 바람을 느끼며. 한국어 테스트를 위한 문장입니다. 아름다운 서체를 확인해보세요.
                     </div>
 
+                    <div class="search-bar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="fontSearchInput" placeholder="搜索字体名称..." oninput="renderFontList()">
+                    </div>
+
                     <button class="btn-secondary flex-center" style="margin-bottom:16px;" onclick="toggleFontAddForm()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 导入新字体
                     </button>
@@ -871,7 +876,7 @@ The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor 
                             <input type="text" id="fontName" placeholder="例如：思源黑体 / 霞鹜文楷">
                         </div>
                         <div class="form-group">
-                            <label>导入来源</label>
+                            <label>导入方式</label>
                             <select id="fontSource" onchange="toggleFontSourceInput()">
                                 <option value="url">URL 直链导入 (支持跨域链接)</option>
                                 <option value="ttf">本地 TTF 文件导入 (自动存入本地库)</option>
@@ -887,6 +892,10 @@ The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor 
                             <input type="file" id="fontTtfFile" accept=".ttf,.otf,.woff,.woff2" style="display:none;" onchange="handleFontFileSelect(event)">
                             <div id="fontFileDisplay" style="font-size:12px; color:var(--text-muted); margin-top:8px;">未选择文件</div>
                             <input type="hidden" id="fontBase64Temp">
+                        </div>
+                        <div class="form-group">
+                            <label>字体来源平台/出处 (选填)</label>
+                            <input type="text" id="fontOrigin" placeholder="例如：Google Fonts / 开源社区">
                         </div>
                         <div class="form-group">
                             <label>字体备注 (选填)</label>
@@ -2211,6 +2220,7 @@ ${templateStr}`;
                 document.getElementById('fontName').value = '';
                 document.getElementById('fontSource').value = 'url';
                 document.getElementById('fontUrl').value = '';
+                document.getElementById('fontOrigin').value = '';
                 document.getElementById('fontNote').value = '';
                 document.getElementById('fontBase64Temp').value = '';
                 document.getElementById('fontFileDisplay').innerText = '未选择文件';
@@ -2240,6 +2250,7 @@ ${templateStr}`;
             const name = document.getElementById('fontName').value.trim();
             const source = document.getElementById('fontSource').value;
             const url = document.getElementById('fontUrl').value.trim();
+            const origin = document.getElementById('fontOrigin').value.trim();
             const note = document.getElementById('fontNote').value.trim();
             const base64 = document.getElementById('fontBase64Temp').value;
 
@@ -2250,12 +2261,11 @@ ${templateStr}`;
 
             if (source === 'url') {
                 if(!url) return alert('请填入合法的直链 URL！');
-                savedFonts.push({ id: newId, name, note, source: 'URL直链', val: url, date: dateStr });
+                savedFonts.push({ id: newId, name, origin, note, source: 'URL直链', val: url, date: dateStr });
             } else {
                 if(!base64) return alert('请先点击上方按钮选择 TTF 文件！');
-                // 因为TTF太大，Base64存入 IndexedDB
                 await FontDB.save(newId, base64);
-                savedFonts.push({ id: newId, name, note, source: 'TTF本地', val: 'indexedDB', date: dateStr });
+                savedFonts.push({ id: newId, name, origin, note, source: 'TTF本地', val: 'indexedDB', date: dateStr });
             }
 
             localStorage.setItem('savedFonts', JSON.stringify(savedFonts));
@@ -2309,7 +2319,7 @@ ${templateStr}`;
             if(!confirm('确定要彻底删除该字体吗？')) return;
             const font = savedFonts.find(f => f.id === id);
             if(font && font.source === 'TTF本地') {
-                await FontDB.delete(id); // 释放内存
+                await FontDB.delete(id);
             }
             savedFonts = savedFonts.filter(f => f.id !== id);
             localStorage.setItem('savedFonts', JSON.stringify(savedFonts));
@@ -2317,23 +2327,45 @@ ${templateStr}`;
         }
 
         function renderFontList() {
+            const query = (document.getElementById('fontSearchInput')?.value || '').trim().toLowerCase();
             const list = document.getElementById('fontListContainer');
             if(!list) return;
             list.innerHTML = '';
-            if(savedFonts.length === 0) {
-                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">暂无字体，快去导入吧。</div>';
+            
+            const filteredFonts = savedFonts.filter(f => !query || f.name.toLowerCase().includes(query));
+            
+            if(filteredFonts.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">暂无匹配的字体。</div>';
                 return;
             }
-            savedFonts.forEach(f => {
+            
+            filteredFonts.forEach(f => {
                 const card = document.createElement('div');
                 card.className = 'api-card';
+                
+                let originHtml = f.origin ? `<div class="api-note" style="margin-bottom:6px;">来源: ${f.origin}</div>` : '';
+                
+                let urlRowHtml = '';
+                if (f.source === 'URL直链') {
+                    urlRowHtml = `
+                    <div class="api-info-row" style="margin-bottom: 12px; background: #FAFAFA;">
+                        <span class="api-info-label">直链</span>
+                        <input type="text" value="${f.val}" readonly>
+                        <button class="icon-btn" onclick="copyText('${f.val}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    </div>`;
+                }
+
                 card.innerHTML = `
                     <div class="api-card-header">
                         <h4 style="font-size:15px;">${f.name}</h4>
                         <span class="api-badge" style="background:var(--text-main);">${f.source}</span>
                     </div>
+                    ${originHtml}
                     <div class="api-note" style="margin-bottom:6px;">备注: ${f.note || '无'}</div>
                     <div class="api-note" style="margin-bottom:12px;">导入时间: ${f.date}</div>
+                    ${urlRowHtml}
                     <div class="api-actions">
                         <button class="action-btn flex-center" style="background:#EAF2FF; color:#007AFF;" onclick="applyFont('${f.id}')">应用预览</button>
                         <button class="action-btn flex-center" onclick="openFontEditModal('${f.id}')">修改备注</button>
