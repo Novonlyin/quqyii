@@ -851,14 +851,26 @@
                 <!-- 字体子储存库 -->
                 <div id="fontLibContent" style="display: none;">
                     <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">实时预览区 (点击虚线框内可自由编辑文字)</div>
-                    <div id="fontPreviewArea" class="font-preview-box" contenteditable="true" spellcheck="false">
-山川异域，风月同天。落霞与孤鹜齐飞，秋水共长天一色。这不仅是一段用来感受文字韵律的话语，更是专为您测试中文排版的详尽文本。
-
-The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. This sentence contains every letter of the English alphabet.
-
-あの山を越えて、美しい風景を見に行きましょう。風の音が聞こえますか。日本語のフォントテストのためのテキストです。
-
-무궁화 꽃이 피었습니다. 별 헤는 밤, 조용히 불어오는 바람을 느끼며. 한국어 테스트를 위한 문장입니다. 아름다운 서체를 확인해보세요.
+                    <div id="fontPreviewArea" class="font-preview-box" contenteditable="true" spellcheck="false" style="text-align: center; padding: 24px 16px;">
+                        <div style="margin-bottom: 24px;">
+                            山川异域，风月同天。落霞与孤鹜齐飞，秋水共长天一色。<br>
+                            这不仅是一段用来感受文字韵律的话语，更是专为您测试中文排版的详尽文本。
+                        </div>
+                        <div style="margin-bottom: 24px;">
+                            The quick brown fox jumps over the lazy dog.<br>
+                            Pack my box with five dozen liquor jugs.<br>
+                            This sentence contains every letter of the English alphabet.
+                        </div>
+                        <div style="margin-bottom: 24px;">
+                            あの山を越えて、美しい風景を見に行きましょう。<br>
+                            風の音が聞こえますか。<br>
+                            日本語のフォントテストのためのテキストです。
+                        </div>
+                        <div>
+                            무궁화 꽃이 피었습니다.<br>
+                            별 헤는 밤, 조용히 불어오는 바람을 느끼며.<br>
+                            한국어 테스트를 위한 문장입니다. 아름다운 서체를 확인해보세요.
+                        </div>
                     </div>
 
                     <div class="search-bar">
@@ -1695,10 +1707,16 @@ relationship_with_user:
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6" transform="rotate(180 12 12)"></polyline></svg>
                                 </button>
                             </div>
-                            <button class="regen-btn" id="regen_btn_${i}" onclick="regenerateReply(${i})">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-                                重回
-                            </button>
+                            <div style="display:flex; gap:4px;">
+                                <button class="regen-btn" onclick="copyMessageText(${i})">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    复制
+                                </button>
+                                <button class="regen-btn" id="regen_btn_${i}" onclick="regenerateReply(${i})">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                                    重回
+                                </button>
+                            </div>
                         </div>
                     `;
                     div.innerHTML = `<div class="msg-content">${contentHtml}</div><div class="bubble-time">${msgTime}</div>${footerHtml}`;
@@ -1722,6 +1740,16 @@ relationship_with_user:
                 chatBox.appendChild(div);
             }
             setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
+        }
+
+        function copyMessageText(index) {
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            if(!session) return;
+            const msg = session.messages[index];
+            if(msg) {
+                const text = msg.variants ? msg.variants[msg.currentVariant] : msg.content;
+                navigator.clipboard.writeText(text).then(() => alert('当前消息文本已成功复制到剪贴板！')).catch(() => alert('复制失败，请手动长按选取复制'));
+            }
         }
 
         function showTypingIndicator() {
@@ -1800,8 +1828,10 @@ relationship_with_user:
                 templateStr = t ? t.content : BUILTIN_TEMPLATE;
             }
             
-            // 动态判断：内置模板显示A，自定义模板显示B
-            let copyrightStr = isDefault ? '该模板来源于鸣曲相思逸的人设生成器' : '该人设由鸣曲相思逸的人设生成器辅助生成';
+            // 动态判断：内置模板显示A，自定义模板显示B。加上醒目的井号边框限制用户删除
+            let copyrightStr = isDefault 
+                ? '######## 本模板来源于 @鸣曲相思逸 的人设生成器，为尊重原作者心血，请勿删除此行标源文字 ########' 
+                : '######## 本人设由 @鸣曲相思逸 的人设生成器辅助生成，为尊重工具原作者，请勿删除此行标源文字 ########';
             
             let ruleStr = '';
             const activeRules = genRules.filter(r => r.enabled);
@@ -1819,7 +1849,7 @@ relationship_with_user:
 ⚠️极度重要指示：只有当用户在对话中明确表示“要求说完整了”、“大纲说完了”、“没别的了”或明确指令“直接生成吧”时，你才能停止提问，进入生成阶段，并严格按照下方的【模板结构】输出最终人设表。
 
 【生成阶段必须遵守的排版与版权要求】：
-1. 你必须将版权声明文字准确无误地插入在生成的文本中：请紧接在 <info> 和 <character> 标签的下一行（如果模板没有这两个标签，则放在最开头第一行），直接打印这句话：“${copyrightStr}”。禁止遗漏或篡改。
+1. 你必须将版权声明文字准确无误地插入在生成的文本中：请紧接在 <info> 和 <character> 标签的下一行（如果模板没有这两个标签，则放在最开头第一行），直接单独一行打印这句话：“${copyrightStr}”。禁止遗漏或篡改。
 2. 各个字段请根据逻辑丰满扩写，未提及的部分请合理发散填补。排版必须整洁干净。${ruleStr}
 
 【模板结构】：
