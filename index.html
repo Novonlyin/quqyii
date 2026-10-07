@@ -517,8 +517,15 @@
                     
                     <div class="chat-input-area">
                         <textarea id="rpChatInput" placeholder="对话互动... (回车发送)" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'" onkeydown="handleRpChatEnter(event)"></textarea>
-                        <button class="action-circle-btn primary" id="rpGenerateBtn" onclick="sendRpMessage()" title="发送并回复">
+                        
+                        <!-- 发送文字但不触发 AI 生成的纸飞机按钮 -->
+                        <button class="action-circle-btn" onclick="sendRpUserMessage()" title="发送文本">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                        
+                        <!-- 专门触发 AI 角色回复的生成气泡按钮 -->
+                        <button class="action-circle-btn primary" id="rpGenerateBtn" onclick="generateRpReply()" title="请求角色回复">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -852,25 +859,10 @@
                 <div id="fontLibContent" style="display: none;">
                     <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">实时预览区 (点击虚线框内可自由编辑文字)</div>
                     <div id="fontPreviewArea" class="font-preview-box" contenteditable="true" spellcheck="false" style="text-align: center; padding: 24px 16px;">
-                        <div style="margin-bottom: 24px;">
-                            山川异域，风月同天。落霞与孤鹜齐飞，秋水共长天一色。<br>
-                            这不仅是一段用来感受文字韵律的话语，更是专为您测试中文排版的详尽文本。
-                        </div>
-                        <div style="margin-bottom: 24px;">
-                            The quick brown fox jumps over the lazy dog.<br>
-                            Pack my box with five dozen liquor jugs.<br>
-                            This sentence contains every letter of the English alphabet.
-                        </div>
-                        <div style="margin-bottom: 24px;">
-                            あの山を越えて、美しい風景を見に行きましょう。<br>
-                            風の音が聞こえますか。<br>
-                            日本語のフォントテストのためのテキストです。
-                        </div>
-                        <div>
-                            무궁화 꽃이 피었습니다.<br>
-                            별 헤는 밤, 조용히 불어오는 바람을 느끼며.<br>
-                            한국어 테스트를 위한 문장입니다. 아름다운 서체를 확인해보세요.
-                        </div>
+                        <div style="margin-bottom: 20px;">山川异域，风月同天。落霞与孤鹜齐飞，秋水共长天一色。</div>
+                        <div style="margin-bottom: 20px;">The quick brown fox jumps over the lazy dog.</div>
+                        <div style="margin-bottom: 20px;">あの山を越えて、美しい風景を見に行きましょう。</div>
+                        <div>무궁화 꽃이 피었습니다. 별 헤는 밤, 조용히 불어오는 바람을 느끼며.</div>
                     </div>
 
                     <div class="search-bar">
@@ -2020,23 +2012,32 @@ ${templateStr}`;
         function handleRpChatEnter(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendRpMessage();
+                sendRpUserMessage();
             }
         }
 
-        async function sendRpMessage() {
-            if (!currentApiUrl || !currentApiKey || !currentModel) return alert('API未配置！');
-            const session = chatSessions.find(s => s.id === currentSessionId);
-            if (!session.rpPersona) return alert('请先点击右上角按钮设置扮演人设！');
-
+        function sendRpUserMessage() {
             const input = document.getElementById('rpChatInput');
             const text = input.value.trim();
             if (!text) return;
 
+            const session = chatSessions.find(s => s.id === currentSessionId);
             session.rpMessages.push({ role: 'user', content: text });
             localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
-            input.value = ''; input.style.height = '';
+            
+            input.value = ''; 
+            input.style.height = '';
             renderRpChat();
+        }
+
+        async function generateRpReply() {
+            if (!currentApiUrl || !currentApiKey || !currentModel) return alert('API未配置！');
+            const session = chatSessions.find(s => s.id === currentSessionId);
+            if (!session.rpPersona) return alert('请先点击右上角按钮设置扮演人设！');
+            
+            if (session.rpMessages.length === 0 || session.rpMessages[session.rpMessages.length - 1].role !== 'user') {
+                return alert('请先发送你想说的话，然后再点击请求回复。');
+            }
 
             const btn = document.getElementById('rpGenerateBtn');
             btn.disabled = true; btn.style.opacity = '0.5';
@@ -2055,7 +2056,7 @@ ${templateStr}`;
                 localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
                 renderRpChat();
             } catch (error) {
-                alert('发送失败: ' + error.message);
+                alert('生成回复失败: ' + error.message);
             } finally {
                 btn.disabled = false; btn.style.opacity = '1';
             }
